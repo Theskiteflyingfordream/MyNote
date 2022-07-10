@@ -1,0 +1,506 @@
+###  为什么要使用集合？
+
+当我们需要保存一组类型相同的数据的时候，我们可以用一个容器来保存，这个容器就是数组，但是数组的缺点是一旦声明之后，长度就不可变了，而且，数组存储的数据是有序的、可重复的，特点单一，同时，对数组的操作需要程序员自行实现，较为繁琐，因此有了集合的出现，它相当于一个容器，提供保存和操作其它元素的操作，对于不同特点的数据可以用不同的集合封装，而程序员只需要调用提供的方法即可。
+
+
+
+### 如何选用集合?
+
+主要根据集合的特点来选用。比如
+
+当我们需要根据键值获取到元素值时就选用 `Map` 接口下的集合，需要排序时选择 `TreeMap`,不需要排序时就选择 `HashMap`,需要保证线程安全就选用 `ConcurrentHashMap`。
+
+当我们只需要存放元素值时，就选择实现`Collection` 接口的集合，需要保证元素唯一时选择实现 `Set` 接口的集合比如 `TreeSet` 或 `HashSet`，不需要就选择实现 `List` 接口的比如 `ArrayList` 或 `LinkedList`，然后再根据实现这些接口的实现类的特点来选用，比如（ArrayList与LinkedList的区别）
+
+
+
+### comparable 和 Comparator 的区别
+
+`comparable` 接口实际上是出自`java.lang`包 它有一个 `compareTo(Object obj)`方法用来排序，主要用于类实现此接口，调用Collections排序的时候，没有指定comparator时，使用实现的compareTo方法排序。
+
+`comparator`接口实际上是出自 java.util 包它有一个`compare(Object obj1, Object obj2)`方法用来排序，主要用于调用方法时，传入comparator实现定制化的排序。
+
+
+
+### Java 集合
+
+ 也叫作容器，主要是由两大接口派生而来： `Collection`接口和Map接口。对于`Collection` 接口，下面又有三个主要的子接口：`List`、`Set` 和 `Queue`。
+
+![img](https://javaguide.cn/assets/java-collection-hierarchy.1727461b.png)
+
+###  说说 List, Set, Queue, Map 四者的区别？
+
+##### `List`: 存储的元素是有序的、可重复的。
+
+实现类主要有
+
+- `Arraylist`： `Object[]` 数组，是线程不安全的
+
+- `Vector`：`Object[]` 数组，线程安全
+
+- `LinkedList`： 双向链表（jdk1.6前循环，1.7改为双向），线程不安全
+
+  与ArrayList的区别在于
+
+  1.底层数据结构不同
+
+  2.ArrayList插入和删除时间受元素位置影响，需要移动元素，扩容。LinkedList因为把指针挪到找到那个位置，同样受到影响，但是不需要移动元素和扩容。
+
+​		3.ArrayList支持随机访问，其实现了RandomAccess接口，而LinkedList不支持。在Collections二分查找中，前者用的是indexedBinarySearch，后者用的是iteratorBinarySearch，需要使用迭代器定位元素。
+
+​		4. ArrayList 的空 间浪费主要体现在在 list 列表的结尾会预留一定的容量空间，而 LinkedList 的空间花费则体		现在对于每一个元素要额外存放直接后继和直接前驱。 
+
+##### `Set`: 存储的元素是无序的、不可重复的。实现类有HashSet、LinkedHashSet 和 TreeSet
+
+​	三者的底层数据结构不同，`HashSet` 的底层数据结构是基于 `HashMap` 实现的哈希表，不能实现排序。`LinkedHashSet` 的底层数据结构是链表和哈希表，链表使得元素的插入和取出顺序满足 FIFO。`	TreeSet` 底层数据结构是红黑树，元素是有序的。
+
+​	hashSet查重是首先根据对象的hashcode来判断set中是否有相同，是则调用equals方法来判断是否相同，再进行操作。
+
+##### `Queue`: 按特定的排队规则来确定先后顺序，存储的元素是有序的、可重复的。
+
+其中Queue是单端队列而Deque继承Queue是双端队列，插入与删除操作都可以分为两类，一类失败后抛出异常（add），一种会返回特殊值（offer）.还有priorityQueue使用二叉堆实现了优先级队列。Dequeue的两个主要实现类为ArrayDeque和LinkedList,两者的区别在于
+
+- `ArrayDeque` 是基于可变长的数组和双指针来实现，而 `LinkedList` 则通过链表来实现。
+- `ArrayDeque` 不支持存储 `NULL` 数据，但 `LinkedList` 支持。
+- `ArrayDeque` 插入时可能存在扩容过程。虽然 `LinkedList` 不需要扩容，但是每次插入数据时均需要申请新的堆空间。
+
+##### `Map`: 使用键值对（key-value）存储，类似于数学上的函数 y=f(x)，"x" 代表 key，"y" 代表 value，key 是无序的、不可重复的，value 是无序的、可重复的，每个键最多映射到一个值。实现了O(1)的查询，实现类主要有hashmap、linkedhashmap、hashtable、treemap
+
+HashMap：jdk1.8以前由数组加链表组成，链表用于解决hash冲突，jdk1.8以后，当链表长度大于阈值（默认为 8）（将链表转换成红黑树前会判断，如果当前数组的长度小于 64，那么会选择先进行数组扩容，而不是转换为红黑树）时，将链表转化为红黑树，以减少搜索时间
+
+LinkedHashmap：在hashmap的基础上增加了一条双向链表，保持了插入取出顺序
+
+Hashtable：数组+链表构成
+
+treeMap：底层数据结构是红黑树，实现了排序
+
+##### HashMap 和 Hashtable 的区别
+
+hashMap不是线程安全的，而hashtable是，内部方法基本都由synchronized修饰
+
+`HashMap` 可以存储 null 的 key 和 value，但 null 作为键只能有一个，null 作为值可以有多个；Hashtable 不允许有 null 键和 null 值，否则会抛出 `NullPointerException`。
+
+初始容量大小和每次扩充容量大小的不同：创建时如果不指定容量初始值，`Hashtable` 默认的初始大小为 11，之后每次扩充，容量变为原来的 2n+1。`HashMap` 默认的初始化大小为 16。之后每次扩充，容量变为原来的 2 倍。② 创建时如果给定了容量初始值，那么 Hashtable 会直接使用你给定的大小，而 `HashMap` 会将其扩充为 2 的幂次方大小。就是说 `HashMap` 总是使用 2 的幂作为哈希表的大小
+
+扩容机制不同：hashMap当链表长度大于阈值（默认为 8）,会判断，如果当前数组的长度小于 64，那么会选择先进行数组扩容，否则将链表转化为红黑树。hashtable没有这样的机制.
+
+HashMap添加元素时，是使用自定义的哈希算法。Hashtable没有自定义哈希算法，而直接采用的key的hashCode()。
+
+
+
+##### Collections.synchronizedMap是怎么实现线程安全？
+
+内部维护了一个普通对象Map，还有排斥锁mutex，
+
+我们在调用这个方法的时候就需要传入一个Map，可以看到有两个构造器，如果你传入了mutex参数，则将对象排斥锁赋值为传入的对象。
+
+如果没有，则将mutex赋值为this，即调用synchronizedMap的对象，就是上面的Map。
+
+创建出synchronizedMap之后，再操作map的时候，就会在方法块内synchronized(mutex)上锁
+
+
+
+##### Collections工具类
+
+提供了排序操作，比如Collections.sort，
+
+提供了查找替换工作，比如binarySearch和fill，
+
+提供了多个`synchronizedXxx()`方法·，该方法可以将指定集合包装成线程同步的集合，从而解决多线程并发访问集合时的线程安全问题。
+
+
+
+### 区别
+
+#####  HashMap 和 HashSet 区别
+
+`HashSet` 底层就是基于 `HashMap` 实现的，除了除了 `clone()`、`writeObject()`、`readObject()`是 `HashSet` 自己不得不实现之外，其他方法都是直接调用 `HashMap` 中的方法，比如add方法是直接调用的map.put(加入的对象，PRESENT)，PRESENT是一个常量private static final 的Object，set中的所有对象再map中存放都是以这个作为value的。
+
+
+
+
+
+### LinkedList
+
+指定位置添加或者get的时候，会通过比较index与size/2的大小，确定是从后往前遍历还是从前往后遍历
+
+
+
+### ArrayList扩容机制
+
+##### 重要的成员变量
+
+```
+//定义一个空数组以供使用
+private static final Object[] EMPTY_ELEMENTDATA = {};
+//也是一个空数组，跟上边的空数组不同之处在于，这个是在默认构造器时返回的，扩容时需要用到这个作判断
+private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
+//实际存放数组中的元素，注意此变量是transient修饰的，不参与序列化
+transient Object[] elementData;
+//数组中实际存放元素个数，区别于elementData.length
+private int size;
+```
+
+##### 三个构造参数（不同的构造参数，通过default_empyt_elementData以及empyt_elementData影响扩容）
+
+无参构造参数，会将成员变量中的default_empyt_elementData赋值给elementData；
+
+传入初始化容量的有参构造数，对于传入值大于0，会新建一个初始化容量长度的Object数组，赋值给elementData，而等于0，则将成员变量中的empyt_elementData赋值给elementData；小于0则抛异常
+
+传入collections子类的有参构造数，会调用参数的toArray将其赋值给elementData，同时更新size为elementData的length，如果为0，将empyt_elementData赋值给elementData，否则判断elementData中的元素是否是Object类型，不是则用Arrays.copyof将其复制成Object类型。
+
+##### 扩容机制
+
+add时首先调用ensureCapacityInternal(size+1)，传入size+1作为minCapacity
+
+在其中会判断，如果elementData==DEFAULTCAPACITY_EMPTY_ELEMENTDATA的话，minCapacity等于DEFAULT_CAPACITY和minCapacity中两者的最大，然后调用ensureExplicitCapacity(minCapacity)
+
+在其中，当minCapacity大于elementData.length的时候，会调用grow(minCapacity)
+
+这个是扩容的核心方法，在其中，使用位运算将newCapacity赋值为elementData.length的1.5倍，如果newCapacity还是小于minCapacity，那么就把minCapacity当作数组的新容量。然后如果新容量大于 MAX_ARRAY_SIZE,进入 hugeCapacity()方法
+
+在其中，如果minCapacity大于最大容量，则新容量则为Integer.MAX_VALUE，否则，新容量大小则为 MAX_ARRAY_SIZE 即为 Integer.MAX_VALUE - 8。
+
+回到grow中，会调用Arrays.copyOf进行复制并扩容
+
+最后回到add中，赋值elementData[size++]；
+
+##### System.arraycopy() 和 Arrays.copyOf()方法
+
+前者是一个native本地方法，也就是它使用c/c++实现的，java只提供方法的接口，它的参数分别位源数组，源的起始位置，目标数组，目标的起始位置，以及要复制的元素。
+
+后者在方法中，new了一个新数组，并调用System.arraycopy() 传入新数组作为目标数组，最后返回这个新数组
+
+##### ensureCapacity方法
+
+这是提供给用户的一个方法，作用是提前增加ArrayList的容量，确保它可以容纳参数指定的元素数，内部也是调用了ensureExplicitCapacity进行扩容，可以减少添加元素时扩容的次数。
+
+
+
+
+
+
+
+### HashMap源码
+
+##### 扰动函数hash
+
+HashMap 通过 key 的 hashCode高16 bit 不变，低16 bit 和高16 bit 做了一个异或，得到hash 值，然后通过 (n - 1) & hash 判断当前元素存放的位置，如果当前位置存在元素的话，就判断该元素与要存入的元素的 hash 值是否相同以及 key 是否euqals，如果相同的话，直接覆盖，不相同就通过拉链法解决冲突。
+
+使用hash方法是为了减少碰撞。
+
+数组位置的确定用的是与运算，往往是低位有效，设计者将key的哈希值与高16为做异或运算使得在做&运算确定数组的插入位置时，此时的低位实际是高位与低位的结合，增加了随机性，减少了哈希碰撞的次数
+
+##### 长度为什么是2的幂次方
+
+如果k%n==k&(n-1)，那么n是2的幂次方
+
+容量是2的整数次幂，n -1 后，高位为1后的0都变为1，如 16：10000, 16-1=15：1111, 1111 再与 hash 做 & 运算的时候，各个位置的取值取决于 hash；如果不是2的整数次幂，必然会有的0的位，0与任何数&肯定为0，会造成更多的哈希冲突
+
+**loadFactor 加载因子为什么是0.75**
+
+threshold = capacity *loadFactor**，**当 Size>=threshold的时候，那么就要考虑对数组的扩增了。
+
+因此loadFactor 太大导致碰撞频繁，链表长度大，查找元素效率低；太小导致扩容频繁，而扩容需要rehash与复制数据，开销大，同时数组的利用率低，存放的数据会很分散。
+
+loadFactor 的默认值为 0.75f 是官方给出的一个比较好的临界值。
+
+**为什么不用B/B+树**
+
+B/B+树适用于外部排序，在数据量不是很多的情况下，数据都会“挤在”一个结点里面。这个时候遍历效率就退化成了链表。
+
+##### jdk7和jdk8的put方法不同
+
+前者
+
+- 数组为空则初始化
+
+- 通过hashCode扰动得到hash后，根据hash&（容量-1）得到存放的下标；
+- 遍历下标对应的链表，依次和插入的 key 比较，如果 key 相同就直接覆盖并直接返回旧值
+- 遍历出来表示不能覆盖，就根据是否大于阈值进行扩容resize，最后采用头插法插入元素。（头插法会造成死循环，[JDK7的HashMap头插法循环的问题，这么难理解吗？_哔哩哔哩_bilibili](https://www.bilibili.com/video/av459045712/)）
+
+后者
+
+```
+1.计算关于key的hashcode值（与Key.hashCode的高16位做异或运算）
+
+2.如果散列表为空时或者长度为0，调用resize()初始化散列表
+
+3.如果没有发生碰撞，直接添加元素到散列表中去
+
+4.如果发生了碰撞(hashCode值相同)，找到key与插入结点equals的结点e，有三种情况
+
+  4.1:若key地址相同或者equals后内容相同，找到e
+
+  4.2:如果是红黑树结构，就调用树的插入方法找到e
+
+  4.3：链表结构，循环遍历直到链表的空尾部，尾插法进行插入，插入之后如果链表中元素大于8，调用treeifbeen()；否则就是找到了结点e（尾插法虽然避免了死循环，但是仍然会存在并发问题，比如putval中线程1判断为null，时间片用完，线程2也判断为null然后插入，到线程1后再插入会把它覆盖掉）
+  4.4：最后，如果e不为null，表示找到了，根据是否允许替换进行替换，并返回旧值
+
+5.走到这一步表示是插入了，判断size++是否大于阈值，进行resize操作。
+```
+
+##### jdk1.7为什么使用头插法
+
+根据程序局部性原理，最近操作的被访问的可能性大。
+
+##### 为什么阈值是8
+
+当使用随机哈希码，节点出现的频率在 hash 桶中遵循泊松分布，桶中元素到达 8 个的时候，再次碰撞概率已经变得非常小，因此每个碰撞位置的链表长度超过 8 个是几乎不可能的。如果链表数超过8，表示hashcode的随机性很差，这个时候就可能导致链表过长，因此需要转换为红黑树。
+
+##### 1.8hashMap什么时候需要扩容，是如何扩容的
+
+```
+1.初始化数组table
+
+2.当数组table的size达到阙值时即++size > load factor \* capacity 时，也是在putVal函数中
+
+3.当插入后，链表长度大于阈值8，而当前数组的长度小于64，会进行扩容
+```
+
+##### 1.8HashMap的构造函数
+
+一种是无参构造函数，loadFactor为默认；另一种是有参构造函数，主要指定加载因子并指定阈值为传入的初始值的最近最大2次幂；
+
+##### 1.8的扩容过程
+
+实现过程：（扩容前已经插入需要插入的数据）
+
+通过判断旧数组的容量是否大于0来判断数组是否初始化过
+
+否：进行初始化
+
+- 判断阈值是否为0来判断是否调用无参构造数
+  - 是:使用默认的大小和阙值
+  - 否:使用阈值作为大小，并根据loadFactor重新计算阈值
+
+是，newTable的容量为oldTable容量的2倍，遍历oldTable的结点，分为三种情况：
+
+- 如果位置只有一个结点，那么直接迁移；
+- 如果位置是TreeNode，调用split方法；
+- 如果是一个链表，遍历把他分为两个链表hi和lo（前者旧哈希表index+旧哈希表容量，后者旧哈希表index），然后迁移到newTable中
+
+
+
+##### jdk1.7的扩容与jdk1.8的扩容区别（x，只记区别）
+
+![图片发自简书App](https://img-blog.csdnimg.cn/img_convert/dd74408150f2d30938f08296a6501d71.png)
+
+
+
+##### 1.8什么时候会从红黑树退化为链表
+
+remove的时候，在红黑树的root节点为空 或者root的右节点、root的左节点、root左节点的左节点为空时 说明树都比较小了；
+
+扩容的时候，会将红黑树分为两个链表hi和lo（前者旧哈希表index+旧哈希表容量，后者旧哈希表index），当hi（lo）长度小于等于6的时候会退化成链表，也就是用Node去代替TreeNode。否则如果另外一条链表为空，就不树化，也不改变TreeNode，如果另外一个非空，就树化。
+
+[(100条消息) HashMap中红黑树退化成链表的情况_qq_41589944的博客-CSDN博客_hashmap 红黑树退化](https://blog.csdn.net/qq_41589944/article/details/120004919)
+
+##### 退化阈值为什么是6？
+
+中间有个差值7可以有效防止链表和树频繁转换 假设一下，如果设计成链表个数超过8则链表转换成树结构，链表个数小于8则树结构转换成链表，如果一个HashMap不停的插入、删除元素，链表个数在8左右徘徊，就会频繁的发生树转链表、链表转树，效率会很低。
+
+为什么要退化？当节点数数小时，红黑树与链表查询效率差距忽略不记，然而红黑树需要维护更多指针域，同时插入删除的操作开销更大。
+
+
+
+##### get逻辑
+
+ 通过 hash & (table.length - 1)获取该key对应的数据节点的hash槽;
+ 判断首节点是否为空, 为空则直接返回空;
+ 	再判断首节点.key 是否和目标值相同, 相同则直接返回(首节点不用区分链表还是红黑树);
+ 	首节点.next为空, 则直接返回空;
+ 		首节点是树形节点, 则进入红黑树数的取值流程, 并返回结果;
+ 		进入链表的取值流程, 并返回结果;
+
+
+
+##### 平时在使用HashMap时一般使用什么类型的元素作为Key？
+
+选择Integer，String这种不可变的类型，像对String的一切操作都是新建一个String对象，对新的对象进行拼接分割等，这些类已经很规范的覆写了hashCode()以及equals()方法。作为不可变类天生是线程安全的。
+
+##### HashMap的遍历方式
+
+1. 迭代器（Iterator）方式遍历；
+2. For Each 方式遍历；
+3. Lambda 表达式遍历;（比如Map.forEach，在这里边也是不能修改的，因为会先拿出modcount，在对每个元素操作完后，会比较modcount是否一致）
+
+我们不能在遍历中使用集合 `map.remove()` 来删除数据，这是非安全的操作方式，但我们可以使用迭代器的 `iterator.remove()` 的方法来删除数据，这是安全的删除集合的方式
+
+原因：
+
+在循环或迭代时，会首先创建一个迭代实例，这个迭代实例的expectedModCount 赋值为集合的modCount.  
+
+每当迭代器使⽤ hashNext() / next() 遍历下⼀个元素之前，都会检测 modCount 变量与expectedModCount 值是否相等，相等的话就返回遍历；否则就抛出异常【ConcurrentModificationException】，终⽌遍历
+
+如果在循环中添加或删除元素，会导致modCount增加，但这些方法不会修改迭代实例中的expectedModCount，导致在迭代实例中expectedModCount 与 modCount的值不相等，抛出ConcurrentModificationException异常
+
+但迭代器中的remove,add方法，会在调用集合的remove,add方法后，将expectedModCount 重新赋值为modCount，所以在迭代器中增加、删除元素是可以正常运行的。
+
+[HashMap 的 7 种遍历方式与性能分析！「修正篇」 (qq.com)](https://mp.weixin.qq.com/s/zQBN3UvJDhRTKP6SzcZFKw)
+
+##### 迭代器是什么
+
+[迭代器](https://so.csdn.net/so/search?q=迭代器&spm=1001.2101.3001.7020)是一种设计模式，它是一个对象，它可以遍历并选择序列中的对象，而开发人员不需要了解该序列的底层结构。Java允许我们直接把任何支持`Iterator`的集合对象用`foreach`循环写出来，由Java编译器完成Iterator模式的所有循环代码。
+
+迭代器往往是以内部类的形式存在。可以通过类.this访问外部类的成员。
+
+##### 快速失败机制
+
+快速失败(fail-fast) 是 Java 集合的⼀种错误检测机制。在使⽤迭代器对集合进⾏遍历的时候，在多线程下操作⾮安全失败(fail-safe)的集合类可能就会触发 fail-fast 机制，导致抛出ConcurrentModificationException 异常。 
+
+另外，在单线程下，如果在遍历过程中对集合对象的内容进⾏了修改的话也会触发 fail-fast 机制。
+
+举个例⼦：多线程下，如果线程 1 正在对集合进⾏遍历，此时线程 2 对集合进⾏修改（增加、删除、修改），或者线程 1 在遍历过程中对集合进⾏修改，都会导致线程 1 抛出ConcurrentModificationException 异常。
+
+(同上)
+
+##### 安全失败机制（比如CopyOnwriteList）
+
+采⽤安全失败机制的集合容器，使用的是写时复制，修改的时候，是先复制数组出来，再修改，然后更换旧数组，在使用iterator的时候，它是将原数组赋值给了迭代器实例中的一个final的引用，然后在这个final上进行遍历，遍历过程不会检测到修改，但是不支持add或remove。
+
+
+
+### concurrentHashMap源码
+
+##### JDK1.7
+
+它是一个由 Segment 组成的数组。然后，每个 Segment 里边是由 HashEntry 组成的数组，每个 HashEntry之间又可以形成链表。HashEntry的value和next都是用volatile来修饰的，保证了内存的可见性和防止指令重排。
+
+Segment继承了ReentrantLock，
+
+构造方法：
+
+首先进行一些参数校验处理，然后寻找并发级别 concurrencyLevel 之上最近的 2 的幂次方值ssize，作为Segment数组初始化容量大小，根据initialCapacity和ssize来确定Segment的初始长度（2的幂次方），然后传入loadfactor等创建原型对象s0作为Segment数组的第一个元素（创建其它Segment都是根据这个原型对象创建），这个过程中还会初始化一些全局的参数，比如segmentMask(ssize-1)，segmentShift（记录的是ssize有效位数）
+
+put方法：
+
+首先hash(key)计算出hash值，通过(hash >>> segmentShift) & segmentMask，得到Segment数组中的对应下标，然后（调用Unsafe类的方法）获取下标对应的Segment的最新值，如果为null，那么久进入ensureSegment()进行初始化，否则调用另一个重载的put
+
+重载的put：
+
+首先tryLock对应的segment一下，获取失败，就调用scanAndLockForPut()，返回的是要插入的结点，然后根据（segment.len-1）&hash获取结点对应在segment中的下标，先对应的遍历hashEntry链表，如果找不到能覆盖的，根据当前容量+1后是否大于阈值并小于最大值rehash()并插入，否则，头插法插入。
+
+（为什么计算 Segment 数组下标是用的 hash值高几位（这里以高 4 位为例）和掩码做与运算，而计算 HashEntry 数组下标是直接用的 hash 值和数组长度减1做与运算。
+
+我的理解是，这是为了尽量避免当前 hash 值计算出来的 Segment 数组下标和计算出来的 HashEntry 数组下标趋于相同。简单说，就是为了避免分配到同一个 Segment 中的元素扎堆现象，即避免它们都被分配到同一条链表上，导致链表过长。同时，也是为了减少并发。）
+
+ensureSegment初始化：(x)
+
+第一个if调用UNSAFE.getObjectVolatile定位的segment是否为空，是则首先根据原型对象参数把HashEntry先创建一个出来，然后再次同样的if判断是否为空，传入HashEntry数组创建新的Segment，再自旋直到定位的segment为空，while中再调用CAS设置新的Segment进去，成功就break，否则继续自旋。
+
+（为什么这么多次判断是否为空？在多线程环境下，因为不确定是什么时候会有其它线程 CAS 成功，有可能发生在以上的任意时刻。所以，只要发现一旦内存中的对象已经存在了，则说明已经有其它线程把Segment对象创建好，并CAS成功同步到主内存了。此时，就可以直接返回，而不需要往下执行了。这样做，是为了代码执行效率考虑。）
+
+scanAndLockForPut流程：（自旋获取锁，到达最大值就阻塞）
+
+会一直循环尝试获取锁，若获取成功，则返回。否则的话，每次循环时，都会同时遍历当前链表。若遍历完了一次，还没找到和key相等的节点，就会预测性地创建一个节点。
+
+同时，当重试次每偶数次时，就会检查一次当前最新的头结点是否被改变。因为若有变化的话，还需要从最新的头结点开始遍历链表。
+
+还有一种情况，就是循环次数达到了最大限制，则停止循环，用阻塞的方式去获取锁。这时，也就停止了遍历链表的动作，当前线程也不会再做其他预热(warm up)的事情。
+
+rehash流程（x）：
+
+创建新表，容量为旧表的两倍，遍历旧表，使用hash&(新容量-1)计算新的下标，对于非空的位置，如果next为null，直接放入迁移，如果为一个链表，那么：
+
+从头结点开始向后遍历，找到当前链表的最后几个下标相同的连续的节点。如上图，虽然开头出现了有两个节点的下标都是 k2, 但是中间出现一个不同的下标 k1，打断了下标连续相同，因此从下一个k2，又重新开始算。好在后边三个连续的节点下标都是相同的，因此倒数第三个节点被标记为 lastRun，且变量无变化。
+
+从lastRun节点到尾结点的这部分就可以整体迁移到新数组的对应下标位置了，因为它们的下标都是相同的，可以这样统一处理。
+
+另外从头结点到 lastRun 之前的节点，无法统一处理，只能一个一个去复制了。
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/gsoYRA2HIgtx3bDGHFoJGZ0tz8vibKIVicTRz4H7fnPkJiao20SELu0pvO6icVaqWsQyonepnicP79QgiaVMqypB820Q/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+get方法：
+
+过程不加锁，先定位到Segment在数组的位置，使用getObjectVolatile获取最新值，判断非空，调用getObjectVolatile定位到Entry在Segment中的位置，再遍历，找到key相同的，再返回value。
+
+remove方法（x）：
+
+过程与put差不多，都需要先获取锁，最终都要unlock，分别定位到Segment和Entry的位置后，遍历链表，找到key相同的，如果是头结点，那么就将next设置成头，不是就将它从链中断开。
+
+size方法：
+
+先采用乐观的方式，认为在统计 size 的过程中，并没有发生 put， remove 等会改变 Segment 结构的操作，在put与remove逻辑中每发生一次，对应的Segment的modcount会+1，因此可以通过比较两次的上一次统计的modcount和与这一次比较，相等就是没有改变，就跳出循环返回。但是，如果发生了，就需要重试。如果重试超过2次，就只能强制把所有 Segment 都加锁之后，再统计了，以此来得到准确的结果，在finally中再unlock。
+
+
+
+##### JDK1.8
+
+数组+链表+红黑树，使用的是CAS+Synchronized 锁，不再有Segment的概念，锁的粒度降低为数组的每一个头结点。Node的value和next都是用volatile来修饰的，保证了内存的可见性和防止指令重排。
+
+##### put操作流程
+
+- 首先会判断 key、value是否为空，如果为空就抛异常；
+- 接着会判断容器数组是否为空，如果为空就初始化数组initTable；
+- 根据（数组长度-1）&key的hash（h ^ (h >>> 16)&0x7fffffff）得到下标，如果位置为null，则CAS插入。
+- 否则判断`f.hash == -1`是否成立，如果成立，表示有其它线程正在扩容，则helpTransfer；
+- 其他的情况，就是synchronize把结点锁住，再把新的`Node`节点按链表或红黑树的方式插入到合适的位置；
+- 节点插入完成之后，接着判断链表长度是否超过`8`，如果超过`8`个，数组长度小于64则扩容，否则将链表转换为红黑树；
+- 最后，进行addCount()将容量加一
+
+##### get操作流程（不加锁，Node和next和value都是用的volatile修饰）
+
+- 根据 hash 值计算位置。
+- 查找到指定位置，如果头节点就是要找的，直接返回它的 value.
+- 如果头节点 hash 值小于 0 ，说明正在扩容或者是红黑树，调用结点的find方法进行查找。
+- 如果是链表，遍历查找之。
+
+initTable操作（X）
+
+- while循环判断数组为空，进入循环后，如果sizeCtl<0，yield让出CPU，否则CAS将SIZECtl修改为-1，修改成功后再判断是否为空，然后进行初始化。
+- 初始化成功后将sizeCtl改成扩容阈值，写死为0.75*容量，然后退出。
+
+##### addCount如何+1？
+
+当需要修改元素数量时，如果CounterCell数组为空，说明竞争少，线程会去 CAS 修改 baseCount 加1。若失败或者CounterCell数组不为空，那么线程被分配到某个 CounterCell ，然后操作它的value（代表长度）CAS加1。如果CounterCell数组为空或者分配的格子为空或者CAS失败，那么会进入fullAddCount，
+
+##### fullAddCount逻辑
+
+自旋处理；分为三种情况
+
+1、counterCells数组不为空。如果指定的CounterCell为空，那么会加锁（类似AQS的方法），然后实例化一个CounterCell放进去，如果是addCount中CAS失败，那么再尝试一次CAS修改CounterCell的value，失败通过扩容和重新分配CounterCell解决；
+
+2、counterCells数组为空，那么就会加锁（类似AQS的方法），然后初始化数组；
+
+3、2加锁失败的时候，会进入这里，会CAS尝试修改baseCount的值；
+
+
+
+扩容操作
+
+协助扩容，每个线程从后向前推进扩容，维护一个全局的volatile的transferIndex来表示总共推进到的元素下标位置。
+
+![图片](https://mmbiz.qpic.cn/mmbiz_jpg/gsoYRA2HIgtx3bDGHFoJGZ0tz8vibKIVicE4pp4sXy2bs2icWRzFicYyKUhbSHdETFHtk2O3xHaiax8cJrEnDlG2XIw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+
+
+
+##### ConcurrentHashMap 不支持 key 或者 value 为 null 的原因？
+
+当put的时候会检查key和value是否为null，如果一个为null，那么就会抛出异常。
+
+假定ConcurrentHashMap也可以存放value为null的值。那不管是HashMap还是ConcurrentHashMap调用map.get(key)的时候，如果返回了null，那么这个null，
+
+都有两重含义：
+
+1.这个key从来没有在map中映射过。
+
+2.这个key的value在设置的时候，就是null。
+
+假设 ConcurrentHashMap 允许存放值为 null 的 value，这时有A、B两个线程，线程A调用`ConcurrentHashMap.get(key)`方法，返回为 null ，我们不知道这个 null 是没有映射的 null ，还是存的值就是 null 。
+
+假设此时，返回为 null 的真实情况是没有找到对应的 key。那么，我们可以用 `ConcurrentHashMap.containsKey(key)`来验证我们的假设是否成立，我们期望的结果是返回 false 。
+
+但是在我们调用 `ConcurrentHashMap.get(key)`方法之后，`containsKey`方法之前，线程B执行了`ConcurrentHashMap.put(key, null)`的操作。那么我们调用`containsKey`方法返回的就是 true 了，这就与我们的假设的真实情况不符合了，这就有了二义性。
+
+##### 为什么map允许value=null
+
+对于HashMap的正确使用场景是在单线程下使用。
+
+在单线程中，当我们得到的value是null的时候，我可以用hashMap.containsKey(key)方法来区分上面说的两重含义。
+
+所以当map.get(key)返回的值是null，在HashMap中虽然存在二义性，但是结合containsKey方法可以避免二义性。
+
+**ConcurrentHashMap**的**弱一致性**体现在clear和get方法，原因在于**没有加锁**。
+
+比如迭代器在遍历数据的时候是一个**Segment**一个**Segment**去遍历的，如果在遍历完一个**Segment**时正好有一个线程在刚遍历完的**Segment**上插入数据，就会体现出不一致性。**clear**也是一样。**get**方法和**containsKey**方法都是遍历对应索引位上所有节点，都是不加锁来判断的，如果是修改性质的因为可见性的存在可以直接获得最新值，不过如果是新添加值则无法保持一致性。

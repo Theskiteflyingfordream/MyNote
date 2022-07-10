@@ -1,0 +1,582 @@
+# 锁的类型
+
+表锁：索引失效或者MyISM使用表锁；
+
+Record Lock表示记录锁，锁的是索引记录。Gap Lock是间隙锁，说的是索引记录之间的间隙。Next-Key Lock是Record Lock和Gap Lock的组合，同时锁索引记录和间隙。他的范围是左开右闭的。（RC不会使用后两种）
+
+**next-key lock 是前开后闭区间，而间隙锁是前开后开区间**
+
+（间隙锁可能引起死锁）
+
+意向锁（表锁）：
+
+分为意向共享锁和意向排他锁；
+
+作用，处理行锁和表锁的矛盾，加表锁时，不用找表中是否已经被加了行锁；
+
+[(108条消息) InnoDB 中的意向锁_XP-Code的博客-CSDN博客_innodb意向锁](https://blog.csdn.net/Wisimer/article/details/115582767)
+
+
+
+# 索引相关
+
+**索引是一种用于快速查询和检索数据的数据结构。常见的索引结构有: B 树， B+树和 Hash。**
+
+**B 树& B+树两者有何异同呢？**
+
+- B 树的所有节点既存放键(key) 也存放 数据(data)，而 B+树只有叶子节点存放 key 和 data，其他内节点只存放 key。
+- B 树的叶子节点都是独立的;B+树的叶子节点有一条引用链指向与它相邻的叶子节点。
+- B 树的检索的过程相当于对范围内的每个节点的关键字做二分查找，可能还没有到达叶子节点，检索就结束了。而 B+树的检索效率就很稳定了，任何查找都是从根节点到叶子节点的过程，叶子节点的顺序检索很明显。
+
+##### 索引类型：主键索引(Primary Key)、辅助索引（唯一索引，普通索引，前缀索引等索引属于二级索引）
+
+##### 聚集索引的优缺点
+
+优点：聚集索引的查询速度非常的快，因为整个 B+树本身就是一颗多叉平衡树。
+
+缺点：
+
+1. **依赖于有序的数据** ：因为 B+树是多路平衡树，如果索引的数据不是有序的，那么就需要在插入时排序，如果数据是整型还好，否则类似于字符串或 UUID 这种又长又难比较的数据，插入或查找的速度肯定比较慢。
+2. **更新代价大** ： 如果对索引列的数据被修改时，那么对应的索引也将会被修改， 而且况聚集索引的叶子节点还存放着数据，修改代价肯定是较大的， 所以对于主键索引来说，主键一般都是不可被修改的。
+
+非聚集索引的优缺点
+
+优点：更新代价比聚集索引要小。
+
+缺点：
+
+1. 跟聚集索引一样，非聚集索引也依赖于有序的数据
+2. **可能会二次查询(回表)** 
+
+##### 覆盖索引
+
+一个索引包含（或者说覆盖）所有需要查询的字段的值，我们就称之为“覆盖索引”。
+
+##### 索引的选择性，使用前缀索引优化（使得选择性接近全列，同时降低索引空间）
+
+
+
+##### 索引下推
+
+[索引下推，这个点你肯定不知道！ (qq.com)](https://mp.weixin.qq.com/s?__biz=MzAwNDA2OTM1Ng==&mid=2453153389&idx=2&sn=995ff4f04eace884646f73607dd8ce3d&scene=21#wechat_redirect)
+
+##### 索引失效
+
+（MySQL 在遇到字符串和数字比较的时候，会自动把字符串转为数字，然后再进行比较）
+
+（在 WHERE 子句中，如果在 OR 前的条件列是索引列，而在 OR 后的条件列不是索引列，那么索引会失效。如果OR前后都是索引列，会对两个索引分别进行了扫描，然后将这两个结果集进行了合并）
+
+[面试官：聊聊索引失效？ (qq.com)](https://mp.weixin.qq.com/s?__biz=MzAwNDA2OTM1Ng==&mid=2453156934&idx=1&sn=38de0442b2a8cd0360ffe0a0c638105f&scene=21#wechat_redirect)
+
+（
+
+- MySQL在使用`!=`或者`<>`的时候无法使用索引会导致全表扫描。
+- `is null`、`is not null`也无法使用索引。
+- 少用`or`，用它来连接时会索引失效。
+
+）
+
+
+
+# join的原理
+
+
+
+# order by原理
+
+不稳定排序，排序的字段如果有重复值，可能导致多次查询结果不一致
+
+
+
+# groupBy的原理
+
+
+
+
+
+# 什么时候会用临时表
+
+语句执行过程中不能一边读数据，一边直接得到结果，这是需要临时表：
+
+比如union得时候，先执行第一个子查询，结果放入临时表，然后执行第二个子查询，每一条记录需要判断是否存在临时表中，才能放入临时表（union all不需要去重因此不会用临时表）；
+
+group by的时候；
+
+
+
+# 三大日志
+
+##### 物理日志与逻辑日志的区别
+
+前者的存储内容是某一个page的某个位置的旧值与新值；后者内容更抽象，其不需要指明更新操作具体作用于哪一块 page，因此也对底层少了一些限制。如果利用物理日志进行宕机后的数据恢复，那么需要确保 page 不能够改变，但利用逻辑日志并不在乎底层 page 是否改变。（物理日志本身就是存储就是基于不可分隔的更新操作，因此其存储先后顺序就代表了执行器的调度顺序。而且由于很容易判断两个 page 是否是同一个 page，如果不是，完全可以安全并行地并行执行。
+
+##### 幂等性
+
+幂等性在日志上的语义是：无论日志回放多少次，最终得到的结果保持一致。
+
+[mysql的逻辑日志、物理日志与物理逻辑日志 - 简书 (jianshu.com)](https://www.jianshu.com/p/646961b93c7e)
+
+##### redo log
+
+`redo log`（重做日志）是`InnoDB`存储引擎独有的，它让`MySQL`拥有了崩溃恢复能力，记录了在某个数据页上做了什么修改，因此是物理日志。（比如 `MySQL` 实例挂了或宕机了，重启时，`InnoDB`存储引擎会使用`redo log`恢复数据，保证数据的持久性与完整性。）
+
+##### 为什么要有redo log?
+
+为了保持事务的持久性，可以事务提交的时候，把事务所修改的所有页面都刷到磁盘；但是这样会有两个缺点：1.可能只修改了页面的一个字节，却要把整个页面刷入；2.事务修改的页面可能并不相邻，会产生很多随机IO；
+
+因此为了改善，可以将修改的东西使用redo log记录一下就好了，好处有两点：1.每一条redo log占用空间少；2.文件的写入是顺序IO
+
+##### redo log如何工作的？
+
+对底层页面中的一次原子访问的过程称之为一个Mini-Transaction（比如向B+树中插入一条记录），是一个不可分割的过程， 他可包含一组redo log；一个事务包含一组语句，一个语句包含一组mtr；在log buffer中，由于并发事务的存在，不同事务的不同mtr交叉存放；
+
+每一个mtr都会被赋予一个LSN（表示产生的早晚）；
+
+mtr结束时，在flush链表中，会把执行过程中修改的页面加入Buffer Pool中的flush链表中，链表中每一项有两个字段，oldest_modification和newest_modification，前者记录的是加载到Buffer Pool后第一次修改时，对应的mtr的LSN，后者是每一次修改都会将mtr对应的LSN写入；flush链表是按照LSN从大到小排序的；
+
+当redo日志中对应的mtr的LSN小于flush链表中最早的oldest_modification时，这个mtr对应的redo项才可以覆盖，因为这个时候对应的页面已经被刷入磁盘了；否则redo项将一直保存在redo文件中
+
+##### Mysql如何保证数据不丢失的
+
+通过三大日志和WAL机制保证了数据的不丢失；
+
+由于redo log会覆盖，因此需要binlog进行数据恢复；而redo log可以对没有被刷盘的但是已经提交事务进行重做；由于组提交的存在，redo log中会存在没有提交的事务，因此需要undo log进行回滚；
+
+##### Mysql如何根据redoLog恢复数据？
+
+##### 先做redo log
+
+建立哈希表，将同一个页面的redo log链在一起（按照生成的顺序从早到晚），然后一次性将一个页面修复，避免随机IO；
+
+不确定checkpoin之后的脏页是否已经刷到磁盘，磁盘中每个页面会记载最近一次修改页面对应的LSN，与redo日志的lsn值进行比较；
+
+##### 再做undo log 
+
+因为没有提交的事务的redo log可能也写入了文件里边（组提交），因此需要用undo log去回滚；
+
+[【Mysql】三大日志 redo log、bin log、undo log (bbsmax.com)](https://www.bbsmax.com/A/MyJx4NrMJn/)
+
+
+
+**三种刷盘策略（innodb_flush_log_at_trx_commit）**（另外，`InnoDB` 存储引擎有一个后台线程，每隔`1` 秒，就会把 `redo log buffer` 中的内容写到文件系统缓存（`page cache`），然后调用 `fsync` 刷盘。）（当 `redo log buffer` 占用的空间即将达到 `innodb_log_buffer_size` 一半的时候，后台线程会主动刷盘。）
+
+- **0** ：设置为 0 的时候，表示每次事务提交时不进行刷盘操作
+
+![img](https://cdn.jsdelivr.net/gh/18702524676/CND5/image/mysql/03/06.png)
+
+- **1** ：设置为 1 的时候，表示每次事务提交时都将进行刷盘操作（默认值）
+
+![img](https://cdn.jsdelivr.net/gh/18702524676/CND5/image/mysql/03/07.png)
+
+- **2** ：设置为 2 的时候，表示每次事务提交时都只把 redo log buffer 内容写入 page cache（文件系统缓存）
+
+![img](https://cdn.jsdelivr.net/gh/18702524676/CND5/image/mysql/03/09.png)
+
+如果仅仅只是`MySQL`挂了不会有任何数据丢失，但是宕机可能会有`1`秒数据的丢失。
+
+##### 日志文件组
+
+![img](https://cdn.jsdelivr.net/gh/18702524676/CND5/image/mysql/03/12.png)
+
+每次刷盘 `redo log` 记录到日志文件组中，`write pos` 位置就会后移更新。
+
+每次 `MySQL` 加载日志文件组恢复数据时，会清空加载过的 `redo log` 记录，并把 `checkpoint` 后移更新。
+
+flush链表中的页被刷新的时候，checkPoint也会被更新；
+
+
+
+##### bin log
+
+`binlog` 是逻辑日志，记录内容是语句的原始逻辑，属于MySql Server层。用于主从复制和数据恢复；
+
+记录格式有statement（sql语句原文，对于时间会有问题）、row（看不到详细内容，变成了具体时间按）、mixed（判断这条`SQL`语句是否可能引起数据不一致，如果是，就用`row`格式，否则就用`statement`格式。）
+
+写入时机
+
+先把日志写到`binlog cache`，事务提交的时候，再把`binlog cache`写到`binlog`文件中。
+
+因为一个事务的`binlog`不能被拆开，无论这个事务多大，也要确保一次性写入，所以系统会给每个线程分配一个块内存作为`binlog cache`。
+
+我们可以通过`binlog_cache_size`参数控制单个线程 binlog cache 大小，如果存储内容超过了这个参数，就要暂存到磁盘（`Swap`）。
+
+![img](https://cdn.jsdelivr.net/gh/18702524676/CND5/image/mysql/04/05.png)
+
+`write`和`fsync`的时机，可以由参数`sync_binlog`控制，为`0`的时候，表示每次提交事务都只`write`，由系统自行判断什么时候执行`fsync`（宕机时会丢失），设置为`1`，表示每次提交事务都会执行`fsync`，可以设置为`N(N>1)`，表示每次提交事务都`write`，但累积`N`个事务后才`fsync`（丢失N个）
+
+##### undo log
+
+异常回滚机制是通过 **（undo log）** （逻辑日志）实现的，所有事务进行的修改都会先记录到这个回滚日志中，然后再执行相关的操作。如果执行过程中遇到异常的话，我们直接利用 **回滚日志** 中的信息将数据回滚到修改之前的样子即可！并且，回滚日志会先于数据持久化到磁盘上。这样就保证了即使遇到数据库突然宕机等情况，当用户再次启动数据库的时候，数据库还能够通过查询回滚日志来回滚将之前未完成的事务。
+
+##### 两段提交
+
+`redo log`在事务执行过程中可以不断写入，而`binlog`只有在提交事务时才写入，写入时机不同。如`binlog`没写完就异常，这时候`binlog`里面没有对应的修改记录。
+
+两端提交将`redo log`的写入拆成了两个步骤`prepare`和`commit`。prepare阶段的时候写入log buffer，并fsync持久化到磁盘，打上prepare标识。commit阶段的时候，binlog写入log buffer，并fsync持久化到磁盘，然后redolog打上commit标识；
+
+使用两阶段提交后，写入`binlog`时发生异常也不会有影响，因为`MySQL`根据`redo log`日志恢复数据时，发现`redo log`还处于`prepare`阶段，并且没有对应`binlog`日志，就会回滚该事务。`redo log`设置`commit`阶段发生异常，并不会回滚事务，它通过事务`id`找到对应的`binlog`日志，所以`MySQL`认为是完整的，就会提交事务恢复数据。
+
+
+
+##### 只有redo log不用bin log行不行
+
+redo log是innodb特有的，而且日志上的记录可能会被覆盖；
+
+
+
+##### 组提交
+
+两段提交阶段中，prepare需要1.写入redo log buffer，2.刷盘
+
+为了减少IO，可以将多个事务的redo log进行一次刷盘；
+
+然而开启binlog时，在commit阶段中，redo log打上commit标识之前，进行binlog的write；需要保证binlog的write日志写入顺序与事务的commit一致，因此会加入一个锁，使得只有前一个事务commit的时候，下一个事务才能prepare
+
+##### 5.6的时候在commit阶段，引入binlog的组提交改善（prepare阶段还是各写各的）
+
+commit阶段分为三个阶段：
+
+Flush阶段：每个事务的binlog写入内存；
+
+sync阶段：binlog做fsync，此时进行组提交；
+
+commit阶段：事务按照顺序进行innoDB commit操作；
+
+在每一个阶段，设置一个队列，到达队列的第一个事务为leader，随后为follower，leader控制follower在这一阶段的顺序；
+
+##### 5.7的优化
+
+上述prepare阶段的redolog的刷盘并没有用到组提交；
+
+可以把redolog的sync放入三个阶段的Flush阶段中，由leader事务一次将其它事务的redo log刷盘
+
+[MySQL 内部 XA 和组提交 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/408636440)
+
+
+
+##### 三大日志的写入顺序
+
+先undo（因为在数据变化之前，就要记录数据旧值）（InnoDB将`Undo Log`看作数据，因此记录`Undo Log`的操作也会记录到`redo log`中。这样undo log就可以象数据一样缓存起来，而不用在`redo log`之前写入磁盘了）[【Mysql】三大日志 redo log、bin log、undo log (bbsmax.com)](https://www.bbsmax.com/A/MyJx4NrMJn/)
+
+后redo prepare，再binlog 最后redo commit
+
+
+
+##### WAL是什么，好处
+
+WAL 就是 Write-Ahead Logging，其实就是所有的修改都先被写入到日志中，然后再写入数据库文件，用于保证数据操作的原子性和持久性。
+
+好处:
+
+- 1.读和写可以完全地并发执行，不会互相阻塞
+- 2.先写入 log 中，磁盘写入从磁盘的随机写变为文件的顺序写，降低了 client 端的延迟就。并且，由于顺序写入大概率是在一个磁盘块内，这样产生的 io 次数也大大降低
+- 3.写入日志当数据库崩溃的时候可以使用日志来恢复磁盘数据
+
+
+
+##### 为什么 VarChar 建议不要超过255?
+
+变长的，需要保存长度。当定义varchar长度小于等于255时，长度标识位需要一个字节，2的8次方，当大于255时，长度标识位需要两个字节；
+
+对于Innodb，最多能对767个字节建立索引，而汉字在UTF-8下一般占3个字节，varchar以字符为单位，255*3=765。
+
+
+
+##### 为什么不要使用长事务?
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/9dwzhvuGc8aP3ZujaVhV3NucRZQWuMRAFaOR1Bedj7rPUOQwATdlic5l6iadXwZzALeZuHIXvZfvQ4LpiborUatibw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+- 1.并发情况下，数据库连接池容易被撑爆
+
+- 2.容易造成大量的阻塞和锁超时
+
+- - 长事务还占用锁资源，也可能拖垮整个库，
+
+- 3.执行时间长，容易造成主从延迟
+
+- 4.回滚所需要的时间比较长
+
+- - 事务越长整个时间段内的事务也就越多
+
+- 5.undolog 日志越来越大
+
+- - 长事务意味着系统里面会存在很老的事务视图。由于这些事务随时可能访问数据库里面的任何数据，所以这个事务提交之前，数据库里面它可能用到的回滚记录都必须保留，这就会导致大量占用存储空间。
+
+
+
+##### 一条 Sql 语句查询偶尔慢会是什么原因?
+
+- 1. 数据库在刷新脏页
+
+- - 比如 redolog 写满了，内存不够用了释放内存如果是脏页也需要刷，mysql 正常空闲状态刷脏页
+
+- 2. 没有拿到锁
+
+
+
+##### 主从延时
+
+从库同步主库数据的过程是串行的，即主库上并行的操作，在从库上会串行执行.
+
+解决：
+
+##### 并行复制
+
+解决主从同步延时问题
+
+从库开启多个线程，并行读取relay log中不同库的日志，然后并行重放不同库的日志，这是库级别的并行
+
+
+
+若主库突然宕机，恰好数据还没同步到从库，那么有些数据可能在从库上是没有的
+
+##### 半同步复制(semi-sync)
+
+解决主库数据丢失问题
+
+主库写入binlog日志后，就会强制此时立即将数据同步到从库
+
+从库将日志写入自己本地的relay log后，会返回一个ack给主库
+
+主库接收到至少一个从库的ack之后才会认为写操作完成
+
+
+
+### Mysql主从复制
+
+- MySql通过三个线程来完成主从库间的数据复制，其中Binlog Dump线程跑在主库上，I/O线程和SQL线程跑着从库上；
+- 当在从库上启动复制时，首先创建I/O线程连接主库，主库随后创建Binlog Dump线程读取数据库事件并发送给I/O线程，I/O线程获取到事件数据后更新到从库的中继日志Relay Log中去，之后从库上的SQL线程读取中继日志Relay Log中更新的数据库事件并应用，如下图所示。
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/CKvMdchsUwlc9vLQe9Ugu4Q3ZUQu9ezDKRmmK2hsjoicDbdDF7PTgTxAqZy9CD3mow4wOhlMK4JTVRBVFygSnWg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+
+
+# BufferPool
+
+##### 是什么？
+
+Mysql向内存申请的一块内存空间，为了缓解磁盘IO的缓存。后续对数据的增删改查都是在`Buffer Pool`里操作
+
+按照默认缓存页的`16KB`以及对应的`800Byte`的描述数据（包含一些所属表空间、数据页的编号、`Buffer Pool`中的地址），在`Buffer Pool`中划分出来一个一个的缓存页和它们对应的描述数据。
+
+##### 会维护一个Free链表以直到哪些缓存页是空闲的
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/23OQmC1ia8nzibSg1dO1RTZY5uYMEsAgSzW4KseSdGVoLm0DqrYC6N0kkW1ls2lOjdaibhFiaNr5MqD4Qbo6sQibAsA/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+##### 会维护一个hash表以快速定位缓存页
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/23OQmC1ia8nzibSg1dO1RTZY5uYMEsAgSzdaQ9TAP6m07jrcMAMGh8pUw8Hzlj1HBZ8XMrOXZfoicfIEoQ227KU2w/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+会维护一个flush链表，当`Buffer Pool`内存不足时，也会优先刷`flush`链表里的缓存页（脏页）。
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/23OQmC1ia8nzibSg1dO1RTZY5uYMEsAgSz79jHx0d2xicwGHvdAFZlckSdwgoMWHbFTjwml1HmbVwcUrzFTJCTonA/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+LRU链表（当`free`链表为空的时候，直接淘汰`LRU`链表尾部缓存页即可。）
+
+预读机制和全表扫描会使热点数据淘汰，可以用将LRU链表按比例冷热分离
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/23OQmC1ia8nzibSg1dO1RTZY5uYMEsAgSzk1DKfvTzGyQVv6ZKWmR7cFRSFy3B2VWNqksred9hUjw7vWic1iayUMjA/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+据页第一次加载进缓存页的时候，是先放入冷数据区域的头部，如果1秒后再次访问缓存页，则会移动到热区域的头部。（防止频繁移动，youg前面一部分访问不会移到头部，后面才会）
+
+[InnoDB 对 Buffer Pool 的奇思妙想 (qq.com)](https://mp.weixin.qq.com/s/qBkWeYrmjZy310se4RcK7g)
+
+# Sql执行流程
+
+##### 为什么查询缓存没了
+
+连接建立后，执行查询语句的时候，会先查询缓存，MySQL 会先校验这个 sql 是否执行过，以 Key-Value 的形式缓存在内存中，Key 是查询语句，Value 是结果集。如果缓存 key 被命中，就会直接返回给客户端，如果没有命中，就会执行后续的操作，完成后也会把结果缓存起来，方便下一次调用。当然在真正执行缓存查询的时候还是会校验用户的权限，是否有该表的查询条件。
+
+MySQL 查询不建议使用缓存，因为查询缓存失效在实际业务场景中可能会非常频繁，假如你对一个表更新的话，这个表上的所有的查询缓存都会被清空。对于不经常更新的数据来说，使用缓存还是可以的。
+
+![图片](https://mmbiz.qpic.cn/mmbiz_png/23OQmC1ia8nzDaJd7LOWUfTL7rtaKlqibiarGf6kibRqjyazon4ppMfzIEZBU45JkdCRGLToY9I8icr55vtp9zOt5JQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+开始执行的时候，要先判断一下对这个表有没有相应的权限
+
+
+
+# 事务的隔离级别
+
+##### 事务的四大特性
+
+1. **原子性：** 事务是最小的执行单位，不允许分割。事务的原子性确保动作要么全部完成，要么完全不起作用；
+2. **一致性：** 一致性表述的是从A状态经过事务转移到B状态，并不会破坏各种约束，例如转账业务中，无论事务是否成功，转账者和收款人的总额应该是不变的；
+
+   3.**隔离性：** 并发访问数据库时，一个用户的事务不被其他事务所干扰，各并发事务之间数据库是独立的；
+
+（也就是说，不同的事务并发操纵相同的数据时，每个事务都有各自完整的数据空间，即一个事务内部的操作及使用的数据对其他并发事务是隔离的，并发执行的 各个事务之间不能互相干扰。）
+
+   4.**持久性：** 一个事务被提交之后。它对数据库中数据的改变是持久的，即使数据库发生故障也不应该对其有任何影响。
+
+##### 并发事务的问题
+
+- **脏读:** 当一个事务正在访问数据并且对数据进行了修改，而这种修改还没有提交到数据库中，这时另外一个事务也访问了这个数据，然后使用了这个数据。
+- **丢失修改:** 指在一个事务读取一个数据时，另外一个事务也访问了该数据，那么在第一个事务中修改了这个数据后，第二个事务也修改了这个数据。这样第一个事务内的修改结果就被丢失。 例如：事务1读取某表中的数据A=20，事务2也读取A=20，事务1修改A=A-1，事务2也修改A=A-1，最终结果A=19，事务1的修改被丢失。
+- **不可重复读:** 指在一个事务内多次读同一数据。在这个事务还没有结束时，另一个事务也访问该数据。那么，在第一个事务中的两次读数据之间，由于第二个事务的修改导致第一个事务两次读取的数据可能不太一样。这就发生了在一个事务内两次读到的数据是不一样的情况，因此称为不可重复读。
+- **幻读:** 幻读与不可重复读类似。它发生在一个事务（T1）读取了几行数据，接着另一个并发事务（T2）插入了一些数据时。在随后的查询中，第一个事务（T1）就会发现多了一些原本不存在的记录，就好像发生了幻觉一样，所以称为幻读。
+
+##### 四个隔离级别
+
+- **READ-UNCOMMITTED(读取未提交)：** 最低的隔离级别，允许读取尚未提交的数据变更，解决了丢失修改，**但可能会导致脏读、幻读或不可重复读**。（读不加锁，写加X锁）[mysql(InnoDB)事务隔离级别(READ UNCOMMITTED) 与 锁 - SegmentFault 思否](https://segmentfault.com/a/1190000012654564)
+- **READ-COMMITTED(读取已提交)：** 允许读取并发事务已经提交的数据，**可以阻止脏读，但是幻读或不可重复读仍有可能发生**。RC支持半一致性读（[MySQL半一致性读原理解析-从源码角度解析_yanzongshuai的专栏的技术博客_51CTO博客](https://blog.51cto.com/yanzongshuai/2106100)）
+- **REPEATABLE-READ(可重复读)：** 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，**可以阻止脏读和不可重复读，但幻读仍有可能发生**。
+- **SERIALIZABLE(可串行化)：** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。（读加读锁，写加写锁）
+
+一次封锁法：避免死锁；两端锁协议（保证事务的并发调度是串行化的）
+
+##### 一致性非锁定读
+
+当为普通读时，如果读取的行正在执行 `DELETE` 或 `UPDATE` 操作，这时读取操作不会去等待行上锁的释放，`InnoDB` 存储引擎会去读取行的一个快照数据，对于这种读取历史数据的方式，我们叫它快照读。
+
+#####  锁定读（当前读）
+
+锁定读会对读取到的记录加锁：
+
+- `select ... lock in share mode`：对记录加 `S` 锁，其它事务也可以加`S`锁，如果加 `x` 锁则会被阻塞
+- `select ... for update`、`insert`、`update`、`delete`：对记录加 `X` 锁，且其它事务不能加任何锁
+
+
+
+#####  InnoDB 对 MVCC 的实现
+
+##### 隐藏字段
+
+在内部，`InnoDB` 存储引擎为每行数据添加了三个 [隐藏字段open in new window](https://dev.mysql.com/doc/refman/5.7/en/innodb-multi-versioning.html)：
+
+- `DB_TRX_ID（6字节）`：表示最后一次插入或更新该行的事务 id。此外，`delete` 操作在内部被视为更新，只不过会在记录头 `Record header` 中的 `deleted_flag` 字段将其标记为已删除
+- `DB_ROLL_PTR（7字节）` 回滚指针，指向该行的 `undo log` 。如果该行未被更新，则为空
+- `DB_ROW_ID（6字节）`：如果没有设置主键且该表没有唯一非空索引时，`InnoDB` 会使用该 id 来生成聚簇索引
+
+![img](https://ddmcc-1255635056.file.myqcloud.com/6a276e7a-b0da-4c7b-bdf7-c0c7b7b3b31c.png)
+
+#####  ReadView
+
+![trans_visible](用到的图片/trans_visible.jpg)
+
+- `m_low_limit_id`：创建时出现过的最大的事务 ID+1，即下一个将被分配的事务 ID。大于等于这个 ID 的数据版本均不可见
+- `m_up_limit_id`：活跃事务列表 `m_ids` 中最小的事务 ID，如果 `m_ids` 为空，则 `m_up_limit_id` 为 `m_low_limit_id`。小于这个 ID 的数据版本均可见
+- `m_ids`：`Read View` 创建时其他未提交的活跃事务 ID 列表。创建 `Read View`时，将当前未提交事务 ID 记录下来，后续即使它们修改了记录行的值，对于当前事务也是不可见的。（`m_ids` 不包括当前事务自己和已提交的事务）
+
+黄色的为m_ids（保存的是创建时的静态的，不会动态改变）；同时还保存了创建该 `Read View` 的事务 ID
+
+##### `undo log` 
+
+主要记录数据的逻辑变化，主要有两个作用：
+
+- 当事务回滚时用于将数据恢复到修改前的样子
+- 另一个作用是 `MVCC` ，当读取记录时，若该记录被其他事务占用或当前版本对该事务不可见，则可以通过 `undo log` 读取之前的版本数据，以此实现非锁定读
+- 辅助持久化
+
+有两种undo log: insert undo log（事务提交后便删除。原因是插入这个动作只有本事务可见，提交后对未提交的，不对插入行修改的事务不可见，对未开始的事务没有影响）、update undo log（更新或删除）（可能需要提供MVCC机制，因此不能再事务提交时就进行删除。提交时放入undo log链表，等待purge线程进行最后的删除。）
+
+##### MVCC的实现
+
+拿记录行的DB_TRX_ID与ReadView中的数据进行比较，不满足要求就从DB_ROLL_PTR中拿再比较
+
+##### RR与RC
+
+共同点：普通读不加锁，修改时需要加锁；都使用了ReadView实现MVCC
+
+不同点：ReadView的创建时机不同，RR只在事务的第一次select时创建，而RC在事务的每一次select都会创建。
+
+RR有效地防止了部分的幻读。（注意不是开启事务时创建）
+
+##### RR如何解决幻读
+
+**1、执行普通 `select`，此时会以 `MVCC` 快照读的方式读取数据**
+
+在快照读的情况下，RR 隔离级别只会在事务开启后的第一次查询生成 `Read View` ，并使用至事务提交。所以在生成 `Read View` 之后其它事务所做的更新、插入记录版本对当前事务并不可见，实现了可重复读和防止快照读下的 “幻读”
+
+**2、执行 select...for update/lock in share mode、insert、update、delete 等当前读**
+
+在当前读下，读取的都是最新的数据，如果其它事务有插入新的记录，并且刚好在当前事务查询范围内，就会产生幻读！`InnoDB` 使用 Next-key来防止这种情况。当执行当前读时，会锁定读取到的记录的同时，锁定它们的间隙，防止其它事务在查询范围内插入数据。
+
+##### 使用MVCC进行修改
+
+MVCC修改时加锁并会读取最新数据，然后会将修改的数据与当前事务版本号放到undolog的当前数据行的版本链作为最新版本。也就是说，事务1、2开，1插入，提交以后，2无法读取到1的插入，但是一旦，2对1插入的行进行更新（与原来的值不能相同），那么2便可以读取到更新，这就是MVCC没有解决的幻读。
+
+[對於 MySQL Repeatable Read Isolation 常見的三個誤解 |作者：Chester Chu |中等 (medium.com)](https://medium.com/@chester.yw.chu/對於-mysql-repeatable-read-isolation-常見的三個誤解-7a9afbac65af)
+
+
+
+# MYISAM与innodb的区别
+
+**`MyISAM`引擎使用表锁，锁粒度大，执行查询语句`SELECT`之前，会自动给涉及到的所有表加读锁，在执行增删改之前，会自动给涉及的表加写锁。读锁优先**
+
+索引的差别（索引原理的笔记里）
+
+mysql不支持外键
+
+
+
+### 为什么MYISAM更快？
+
+InnoDB不保存表的具体行数，执行select count(\*) from table时需要全表扫描或者是根据索引进行扫描（[我说 SELECT COUNT(*) 会造成全表扫描，面试官让丙回去等通知 (qq.com)](https://mp.weixin.qq.com/s?__biz=MzAwNDA2OTM1Ng==&mid=2453143888&idx=2&sn=5b7c35d1d4668bc39ef160094ee85018&scene=21#wechat_redirect)）。而MyISAM用一个变量保存了整个表的行数，执行上述语句时只需要读出该变量即可，速度很快（注意不能加有任何WHERE条件）；
+
+维护事务；
+
+聚簇索引，innodb没有索引覆盖的时候，需要对B+树找两次。
+
+
+
+
+
+# 七种Join
+
+![七种JOIN理论](https://img-blog.csdnimg.cn/20200801212011559.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1JyaW5nb18=,size_16,color_FFFFFF,t_70)
+
+
+
+# 几大范式与几个完整性
+
+
+
+
+
+# 关系型数据库与非关系型数据库
+
+**关系型数据库：**
+
+指采用了关系模型来组织数据的数据库。关系模型指的就是二维表格模型，而一个关系型数据库就是由二维表及其之间的联系所组成的一个数据组织。
+
+优点：
+
+1.容易理解：二维表结构是非常贴近逻辑世界的一个概念，关系模型相对网状、层次等其他模型来说更容易理解
+2.使用方便：通用的SQL语言使得操作关系型数据库非常方便
+3.易于维护：丰富的完整性(实体完整性、参照完整性和用户定义的完整性)大大减低了数据冗余和数据不一致的概率
+
+4.一般遵循ACID原则，支持事务
+
+缺点：
+
+1.大量的磁盘IO；
+
+2.多表的关联词查询以及复杂的SQL查询，会导致性能欠佳；
+
+**非关系型数据库：**
+
+存储格式为非关系模型，可以是key,value形式、文档形式、图片形式等；
+
+优点：
+
+1.存储格式灵活；
+
+2.可以用硬盘或内存作为载体，速度快；而关系型数据库只能用硬盘
+
+缺点：
+
+1.无事务处理；
+
+2.不提供sql支持；
+
+3.无法进行复杂查询；
+
+[面试题：非关系型数据库和关系型数据库区别，优势比较？ - 掘金 (juejin.cn)](https://juejin.cn/post/6850418120369930253)
+
+
+
+
+
+# 待看：
+
+[数据库面试题 - 简书 (jianshu.com)](https://www.jianshu.com/p/6ce5553e80bc)
