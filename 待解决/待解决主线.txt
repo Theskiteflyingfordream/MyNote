@@ -8,10 +8,6 @@ Spring的SPI机制（https://blog.csdn.net/fengyuyeguirenenen/article/details/12
 Dubbo：
 心跳机制？
 
-小林coding Linux内存管理以及进程与线程
-
-两次面试的总结
-
 回顾
 https://www.wangt.cc/2021/05/%E3%80%90%E9%9D%A2%E8%AF%95%E4%B8%93%E7%94%A8%E3%80%91java%E5%BF%AB%E9%80%9F%E9%80%9A%E5%85%B3/
 
@@ -19,8 +15,16 @@ https://www.wangt.cc/2021/05/%E3%80%90%E9%9D%A2%E8%AF%95%E4%B8%93%E7%94%A8%E3%80
 
 netty，先看网站的第一话，然后去看JavaGuid，再总结面试考点
 
-完善操作系统和计算机网络面试考点
+小林coding的线程同步；
+
+线程的通信机制
 
 为什么要有接口？考oop?
 
 k个一组的翻转链表
+
+
+
+后续：
+整合小林coding中的进程通信机制到笔记
+看pdai的JVM，并总结各种GC回收器八股

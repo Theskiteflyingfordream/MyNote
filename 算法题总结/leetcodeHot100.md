@@ -638,24 +638,291 @@ class Solution {
 先找左边界，然后找右边界
 
 ```
-public int binarySearch(int[] nums, int target, boolean lower) {
-        int left = 0, right = nums.length - 1, ans = nums.length;
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            if (nums[mid] > target || (lower && nums[mid] >= target)) {
-                right = mid - 1;
-                ans = mid;
-            } else {
-                left = mid + 1;
+class Solution {
+    public int[] searchRange(int[] nums, int target) {
+        int leftIdx = binarySearch(nums, target, true);
+        int rightIdx = binarySearch(nums, target, false);
+        if (leftIdx <= rightIdx && rightIdx < nums.length && nums[leftIdx] == target && nums[rightIdx] == target) {
+            return new int[]{leftIdx, rightIdx};
+        }
+        return new int[]{-1, -1};
+    }
+
+    public int binarySearch(int[] nums, int target, boolean prj){
+        int l = 0, r = nums.length-1, ans = 0;
+        while(l<=r){
+            int mid =(l+r)>>1;
+            if(nums[mid]<target || (!prj&&nums[mid]==target)){
+                l = mid + 1;
+                if(!prj) ans = mid;
+            }else if(nums[mid]>target || (prj&&nums[mid]==target)){
+                r = mid - 1;
+                if(prj) ans = mid;
             }
         }
         return ans;
+    }
 }
 ```
 
 lower为true的时候，找左边界，nums[mid]=target的时候，right也要移到mid-1；
 
-lower为false的时候，找有边界二，nums[mid] = target的时候，left也要移到mid+1；
+lower为false的时候，找右边界，nums[mid] = target的时候，left也要移到mid+1；
+
+
+
+#### [39. 组合总和](https://leetcode-cn.com/problems/combination-sum/)
+
+常用解法（每层递归用for遍历元素，注意for中初始值为当前元素位置）
+
+```
+class Solution {
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+    	//排序是为了方便剪枝
+        Arrays.sort(candidates);
+        List<List<Integer>> result = new ArrayList<>();
+        List<Integer> ele = new ArrayList<>();
+        backtrace(candidates, target, result, ele, 0, 0);
+        return result;
+    }
+
+    private void backtrace(int[] candidates, int target, List<List<Integer>> result, List<Integer> ele, int total, int idx){
+        if(total == target){
+            result.add(new ArrayList<>(ele));
+            return;
+        }
+        for(int i = idx; i < candidates.length; i++){
+        	//剪枝
+            if(total+candidates[i] <= target){
+                ele.add(candidates[i]);
+                //由于相同元素可以重复选择，故传入i而不是i+1
+                backtrace(candidates, target, result, ele, total+candidates[i], i);
+                ele.remove(new Integer(candidates[i]));
+            }else{
+                break;
+            }
+        }
+    }
+
+}
+```
+
+图示：
+
+![77.组合4](%E7%94%A8%E5%88%B0%E7%9A%84%E5%9B%BE%E7%89%87/20210130194335207.png)
+
+第二种解法（每层递归判断当前元素在还是不在）
+
+```
+class Solution {
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        List<List<Integer>> ans = new ArrayList<List<Integer>>();
+        List<Integer> combine = new ArrayList<Integer>();
+        dfs(candidates, target, ans, combine, 0);
+        return ans;
+    }
+
+    public void dfs(int[] candidates, int target, List<List<Integer>> ans, List<Integer> combine, int idx) {
+        if (idx == candidates.length) {
+            return;
+        }
+        if (target == 0) {
+            ans.add(new ArrayList<Integer>(combine));
+            return;
+        } 
+        // 选择当前数 
+        if (target - candidates[idx] >= 0) {
+            combine.add(candidates[idx]);
+            //关键：传入的参数仍为idx
+            dfs(candidates, target - candidates[idx], ans, combine, idx);
+            combine.remove(combine.size() - 1);
+        }
+        // 不选择当前数
+        dfs(candidates, target, ans, combine, idx + 1);
+    }
+}
+```
+
+**组合数总和II**
+
+见代码随想录回溯总结，同层去重
+
+```
+class Solution {
+    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+        //排序是为了去重
+        Arrays.sort(candidates);
+        List<List<Integer>> list = new ArrayList<>();
+        backtrace(candidates, target, list, new ArrayList<Integer>(), 0, 0);
+        return list;
+    }
+    private void backtrace(int[] candidates, int target, List<List<Integer>> result, List<Integer> ele, int total, int idx){
+        if(total == target){
+            result.add(new ArrayList<>(ele));
+            return;
+        }
+        for(int i = idx; i < candidates.length; i++){
+            if(i!=idx && candidates[i]==candidates[i-1]) continue;
+            if(total+candidates[i] <= target){
+                ele.add(candidates[i]);
+                backtrace(candidates, target, result, ele, total+candidates[i], i+1);
+                ele.remove(new Integer(candidates[i]));
+            }else{
+                break;
+            }
+        }
+    }
+}
+```
+
+
+
+#### [42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/)
+
+方法一：暴力法；当前柱子能够装的雨水 = 左右两边较小的最高柱子 - 当前柱子高；
+
+对每个柱子计算左右两边较小的最高柱子的高度，然后计算雨水累加
+
+```
+class Solution {
+    public int trap(int[] height) {
+        int ans = 0;
+        for(int i=0; i<height.length; i++){
+            int maxL = 0, maxR = 0;
+            for(int il=i; il>=0; il--) maxL = Math.max(maxL, height[il]);
+            for(int ir=i; ir<height.length; ir++) maxR = Math.max(maxR, height[ir]);
+            ans += Math.min(maxL, maxR) - height[i];
+        }
+        return ans;
+    }
+}
+```
+
+方法二：单调栈
+
+```
+class Solution {
+    public int trap(int[] height) {
+       int len = height.length, res = 0;
+        Deque<Integer> stack = new ArrayDeque<>();
+        for (int i = 0; i < len; i++) {
+            while(!stack.isEmpty() && height[stack.peekLast()] < height[i]) {
+                int top = stack.pollLast();
+                //左边界不能算
+                if(stack.isEmpty()) break;
+                int left = stack.peekLast();
+                res += (Math.min(height[left],height[i])-height[top]) * (i-left-1);
+            }
+            stack.addLast(i);
+        }
+        return res;
+    }
+}
+```
+
+维护一个高度单调递减的栈，当出现高度大于栈顶元素时，就可以计算出栈顶元素的装水量
+
+方法三：
+
+dp
+
+对应于暴力法，找每个位置左边最高柱子，是一个dp问题，同理右边；
+
+```
+class Solution {
+    public int trap(int[] height) {
+        int n = height.length;
+        if (n == 0) {
+            return 0;
+        }
+
+        int[] leftMax = new int[n];
+        leftMax[0] = height[0];
+        for (int i = 1; i < n; ++i) {
+            leftMax[i] = Math.max(leftMax[i - 1], height[i]);
+        }
+
+        int[] rightMax = new int[n];
+        rightMax[n - 1] = height[n - 1];
+        for (int i = n - 2; i >= 0; --i) {
+            rightMax[i] = Math.max(rightMax[i + 1], height[i]);
+        }
+
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            ans += Math.min(leftMax[i], rightMax[i]) - height[i];
+        }
+        return ans;
+    }
+}
+```
+
+
+
+#### [46. 全排列](https://leetcode.cn/problems/permutations/)
+
+回溯中的排列；见代码随想录  回溯总结
+
+```
+class Solution {
+    public List<List<Integer>> permute(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        backTrace(res, new ArrayList<Integer>(), nums, 0);
+        return res;
+    }
+
+    private void backTrace(List<List<Integer>> res, List<Integer> ele, int[] nums, int index){
+        if(index==nums.length){
+            res.add(new ArrayList<Integer>(ele));
+            return;
+        }
+        for(int i=index; i<nums.length; i++){
+            swap(nums, index, i);
+            ele.add(nums[index]);
+            backTrace(res, ele, nums, index+1);
+            ele.remove(new Integer(nums[index]));
+            swap(nums, index, i);
+        }
+    }
+
+    private void swap(int[] nums, int i, int j){
+        int t = nums[i];
+        nums[i]= nums[j];
+        nums[j] = t;
+    }
+}
+```
+
+
+
+#### [48. 旋转图像](https://leetcode.cn/problems/rotate-image/)
+
+背公式
+
+```
+class Solution {
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+        for (int i = 0; i < n / 2; ++i) {
+            for (int j = 0; j < (n + 1) / 2; ++j) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[n - j - 1][i];
+                matrix[n - j - 1][i] = matrix[n - i - 1][n - j - 1];
+                matrix[n - i - 1][n - j - 1] = matrix[j][n - i - 1];
+                matrix[j][n - i - 1] = temp;
+            }
+        }
+    }
+}
+```
+
+![fig1](%E7%94%A8%E5%88%B0%E7%9A%84%E5%9B%BE%E7%89%87/1.png)
+
+![fig2](%E7%94%A8%E5%88%B0%E7%9A%84%E5%9B%BE%E7%89%87/2.png)
+
+有上面两种情况，套公式
+
+matrix [row] [col] = matrix [n-col-1] [row]
 
 
 
@@ -665,9 +932,191 @@ lower为false的时候，找有边界二，nums[mid] = target的时候，left也
 
 方法一：用value排序后的String作为key；
 
-方法二：value中，每个出现次数大于 0 的字母和出现次数按顺序拼接成字符串，这个字符串做为key；
+方法二：value中，按照a-z的顺序，每个出现次数大于 0 的字母和出现次数按顺序拼接成字符串，这个字符串做为key；
+
+```
+class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+        Map<String,List<String>> map = new HashMap<>();
+        for(String s:strs){
+            int[] count = new int[26];
+            for(char c:s.toCharArray()) count[c-'a']++;
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i<26; i++){
+                if(count[i]!=0){
+                    sb.append('a'+i);
+                    sb.append(count[i]);
+                }
+            }
+            String key = sb.toString();
+            List<String> l = map.getOrDefault(key, new ArrayList<String>());
+            l.add(s);
+            map.put(key,l);
+        }
+        return new ArrayList<>(map.values());
+    }
+}
+```
 
 方法三：每个字符对应一个质数，value中字符对应的质数*出现次数的和，作为key；
+
+
+
+#### [53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)
+
+dp
+
+```
+class Solution {
+    public int maxSubArray(int[] nums) {
+        int max = nums[0], curTo = nums[0];
+        for(int i=1; i<nums.length; i++){
+            curTo = Math.max(nums[i],curTo+nums[i]);
+            max = Math.max(max,curTo);
+        }
+        return max;
+    }
+}
+```
+
+
+
+#### [55. 跳跃游戏](https://leetcode.cn/problems/jump-game/)
+
+贪心（尽可能到达最远位置）
+
+```
+class Solution {
+    public boolean canJump(int[] nums) {
+        int right = nums[0], len = nums.length;
+        if(right>=len-1) return true;
+        for(int i=1; i<=right; i++){
+            right = Math.max(right, i+nums[i]);
+            if(right>=len-1) return true;
+        }
+        return false;
+    }
+}
+```
+
+维护最远位置right
+
+
+
+#### [56. 合并区间](https://leetcode.cn/problems/merge-intervals/)
+
+排序再合并
+
+```
+public int[][] merge(int[][] intervals) {
+        if(intervals.length==0) return new int[0][2];
+        Arrays.sort(intervals, new Comparator<int[]>() {
+            @Override
+            public int compare(int[] o1, int[] o2) {
+                return o1[0] - o2[0];
+            }
+        });
+        LinkedList<int[]> merged = new LinkedList<>();
+        for(int[] e : intervals){
+            if(!merged.isEmpty() && merged.peekLast()[1]>=e[0]){
+                merged.peekLast()[1] = Math.max(e[1], merged.peekLast()[1]);
+            }else{
+                merged.addLast(e);
+            }
+        }
+        return merged.toArray(new int[merged.size()][]);
+    }
+```
+
+
+
+#### [62. 不同路径](https://leetcode.cn/problems/unique-paths/)
+
+dp
+
+```
+class Solution {
+    public int uniquePaths(int m, int n) {
+        int[][] dp = new int[m][n];
+        for(int i=0; i<m; i++) dp[i][0] = 1;
+        for(int j=0; j<n; j++) dp[0][j] = 1;
+        for(int i=1; i<m; i++){
+            for(int j=1; j<n; j++){
+                dp[i][j] = dp[i-1][j] + dp[i][j-1]; 
+            }
+        }
+        return dp[m-1][n-1];
+    }
+}
+```
+
+转移方程
+
+dp[i] [j] = dp[i-1] [j] + dp[i] [j-1]; 
+
+
+
+63、不同路径II
+
+dp，比上面这道多了一个非障碍判断
+
+```
+class Solution {
+    public int uniquePathsWithObstacles(int[][] obstacleGrid) {
+        int m = obstacleGrid.length, n = obstacleGrid[0].length;
+        int[][] dp = new int[m][n];
+        for(int i=0; i<m && obstacleGrid[i][0]!=1; i++) dp[i][0] = 1;
+        for(int j=0; j<n && obstacleGrid[0][j]!=1; j++) dp[0][j] = 1;
+        for(int i=1; i<m; i++){
+            for(int j=1; j<n; j++){
+                if(obstacleGrid[i][j]!=1){
+                    dp[i][j] = dp[i-1][j] + dp[i][j-1];
+                }
+            }
+        }
+        return dp[m-1][n-1];
+    }
+}
+```
+
+64、最小路径之和
+
+dp，与62差别在于求的是最小
+
+```
+class Solution {
+    public int minPathSum(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        int[][] dp = new int[m][n];
+        dp[0][0] = grid[0][0];
+        for(int i=1; i<m; i++) dp[i][0] = grid[i][0] + dp[i-1][0];
+        for(int j=1; j<n; j++) dp[0][j] = grid[0][j] + dp[0][j-1];
+        for(int i=1; i<m; i++){
+            for(int j=1; j<n; j++){
+                dp[i][j] = grid[i][j] + Math.min(dp[i-1][j], dp[i][j-1]);
+            }
+        }
+        return dp[m-1][n-1];
+    }
+}
+```
+
+
+
+#### [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+```
+class Solution {
+    public int climbStairs(int n) {
+        int[] dp = new int[n+1];
+        dp[0]=1; dp[1]=1;
+        for(int i=2; i<=n; i++) dp[i] = dp[i-1] + dp[i-2];
+        return dp[n];
+    }
+}
+```
+
+dp
 
 
 
