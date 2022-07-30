@@ -13,7 +13,7 @@ https://www.wangt.cc/2021/05/%E3%80%90%E9%9D%A2%E8%AF%95%E4%B8%93%E7%94%A8%E3%80
 
 截图中的spring启动流程
 
-netty，先看网站的第一话，然后去看JavaGuid，再总结面试考点
+netty，先看网站的第一话，https://imlql.cn/post/3f9283e7.html，然后去看JavaGuid，再总结面试考点
 
 小林coding的线程同步；
 
