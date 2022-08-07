@@ -1120,6 +1120,96 @@ dp
 
 
 
+#### [72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+```
+class Solution {
+    public int minDistance(String word1, String word2) {
+        int len1 = word1.length(), len2 = word2.length();
+        int[][] dp = new int[len1+1][len2+1];
+        for(int i=0; i<=len1; i++) dp[i][0] = i;
+        for(int j=0; j<=len2; j++) dp[0][j] = j;
+        for(int i=1; i<=len1; i++){
+          for(int j=1; j<=len2; j++){
+          	  //状态转移方程
+              dp[i][j] = Math.min(dp[i-1][j-1], Math.min(dp[i-1][j], dp[i][j-1]))+1;
+              if(word1.charAt(i-1)==word2.charAt(j-1)) dp[i][j] = Math.min(dp[i][j], dp[i-1][j-1]); 
+          }  
+        }
+        return dp[len1][len2];
+    }
+}
+```
+
+dp
+
+
+
+#### [75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+方法一：
+
+两边扫描，第一次把所有0交换到前面，第二次把所有1交换到前面
+
+方法二：
+
+双指针，p0指向连续的0后的下一个，p1指向连续的1的下一个；在一趟遍历的过程中维护这两个指针，遇到1则交换到p1，然后p1前移，遇到0，分两种情况，一种p0和p1相等，另一种p0<p1；
+
+```
+class Solution {
+    public void sortColors(int[] nums) {
+        int p0 = 0, p1 = 0;
+        for(int i=0; i<nums.length; i++){
+            if(nums[i]==1){
+                swap(nums, i, p1);
+                p1++;
+            }else if(nums[i]==0){
+                swap(nums, i, p0);
+                if(p0<p1) swap(nums, i, p1);
+                p0++;
+                p1++;
+            }
+        }
+    }
+
+    private void swap(int[] nums, int i, int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+方法三：
+
+双指针，p0指向连续0的下一个，p2指向连续2的下一个，p2从最右端开始；维护这两个指针，一趟遍历中，i超过p2就结束；如果当前是0，与p0交换，p0++，如果当前是2，与p2交换，p2--，但是可能交换后当前还是2，直接i++会跳过，因此要用循环。
+
+```
+class Solution {
+    public void sortColors(int[] nums) {
+        int p0 = 0, p2 = nums.length-1;
+        for(int i=0; i<=p2; i++){
+            while(i<p2 && nums[i]==2){
+                swap(nums, i, p2);
+                p2--;
+            }
+            if(nums[i]==0){
+                swap(nums, i, p0);
+                p0++;
+            }
+        }
+    }
+
+    private void swap(int[] nums, int i, int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+
+
 #### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
 
 ```
@@ -1153,6 +1243,137 @@ class Solution {
 移动左指针的时候，只能移动count[cs[l]]>0的，这说明即使移了还是包含t；
 
 用cnt记录包含了t的几个字符；
+
+
+
+#### [78. 子集](https://leetcode.cn/problems/subsets/)
+
+方法一：抽象成树形如下
+
+![78.子集](%E7%94%A8%E5%88%B0%E7%9A%84%E5%9B%BE%E7%89%87/202011232041348.png)
+
+与组合问题的区别在于，组合问题找的是树的叶子结点，而子集问题要找树的每一个非根结点。
+
+```
+class Solution {
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        dfs(0, nums, res, new ArrayList<Integer>());
+        return res;
+    }
+
+    private void dfs(int index, int[] nums, List<List<Integer>> res, List<Integer> ele){
+        res.add(new ArrayList<Integer>(ele));
+        for(int i=index; i<nums.length; i++){
+            ele.add(nums[i]);
+            dfs(i+1, nums, res, ele);
+            ele.remove(new Integer(nums[i]));
+        }
+    }
+}
+```
+
+方法二：
+
+根据每一个元素取与不取进行讨论
+
+```
+class Solution {
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        dfs(0, nums, res, new ArrayList<Integer>());
+        return res;
+    }
+
+    private void dfs(int index, int[] nums, List<List<Integer>> res, List<Integer> ele){
+        if(index==nums.length){
+            res.add(new ArrayList<Integer>(ele));
+            return;
+        }
+        dfs(index+1, nums, res, ele);
+        ele.add(new Integer(nums[index]));
+        dfs(index+1, nums, res, ele);
+        ele.remove(new Integer(nums[index]));
+    }
+}
+```
+
+**子集II：**
+
+```
+class Solution {
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        Arrays.sort(nums);
+        dfs(res, new ArrayList<Integer>(), nums, 0);
+        return res;
+    }
+
+    private void dfs(List<List<Integer>> res, List<Integer> ele, int[] nums, int index){
+        res.add(new ArrayList<Integer>(ele));
+        for(int i=index; i<nums.length; i++){
+            if(i!=index && nums[i-1]==nums[i]) continue;
+            ele.add(nums[i]);
+            dfs(res, ele, nums, i+1);
+            ele.remove(new Integer(nums[i]));
+        }
+    }
+}
+```
+
+先排序；然后在同一层去重
+
+![90.子集II](%E7%94%A8%E5%88%B0%E7%9A%84%E5%9B%BE%E7%89%87/20201124195411977.png)
+
+
+
+#### [79. 单词搜索](https://leetcode.cn/problems/word-search/)
+
+回溯
+
+```
+class Solution {
+    public boolean exist(char[][] board, String word) {
+        int m = board.length, n = board[0].length;
+        for(int i=0; i<m; i++){
+            for(int j=0; j<n; j++){
+                if(board[i][j]==word.charAt(0)) {
+                    boolean[][] prj = new boolean[m][n];
+                    prj[i][j] = true;
+                    if(match(board, word, i, j, 1, prj)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean match(char[][] board, String word, int i, int j, int index, boolean[][] prj){
+        if(index==word.length()) return true;
+        // 朝四个方向发散
+        if(i-1>=0 && !prj[i-1][j] && word.charAt(index)==board[i-1][j]) {
+            prj[i-1][j] = true;
+            if(match(board, word, i-1, j, index+1, prj)) return true;
+            prj[i-1][j] = false;
+        }
+        if(i+1<board.length && !prj[i+1][j] && word.charAt(index)==board[i+1][j]) {
+            prj[i+1][j] = true;
+            if(match(board, word, i+1, j, index+1, prj)) return true;
+            prj[i+1][j] = false;
+        }
+        if(j-1>=0 && !prj[i][j-1] && word.charAt(index)==board[i][j-1]) {
+            prj[i][j-1] = true;
+            if(match(board, word, i, j-1, index+1, prj)) return true;
+            prj[i][j-1] = false;
+        }
+        if(j+1<board[0].length && !prj[i][j+1] && word.charAt(index)==board[i][j+1]) {
+            prj[i][j+1] = true;
+            if(match(board, word, i, j+1, index+1, prj)) return true;
+            prj[i][j+1] = false;
+        }
+        return false;
+    }
+}
+```
 
 
 
@@ -1201,27 +1422,25 @@ class Solution {
 class Solution {
     public int maximalRectangle(char[][] matrix) {
         int m = matrix.length, n = matrix[0].length;
-        if(m==0) return 0;
-        int[][] left = new int[m+1][n];
+        int[][] left = new int[m+2][n];
         for(int i=0; i<m; i++){
             for(int j=0; j<n; j++){
-                if(matrix[i][j]=='1') left[i+1][j] = ((j==0)? 0:left[i+1][j-1])+1;
+                if(matrix[i][j]=='1') left[i+1][j] = ((j==0)? 0:left[i+1][j-1]) + 1;
             }
         }
-
+        
         int res = 0;
         for(int j=0; j<n; j++){
-            Deque<Integer> stack = new LinkedList<>();
+            LinkedList<Integer> stack = new LinkedList<>();
             stack.addLast(m+1);
             for(int i=m; i>=0; i--){
-                while(stack.peekLast()!=m+1 && left[i][j]<left[stack.peekLast()][j]){
-                    int t = stack.pollLast();
-                    res = Math.max(res, left[t][j]*(stack.peekLast()-i-1));
+                while(left[i][j]<left[stack.peekLast()][j]){
+                    int cur = stack.pollLast();
+                    res = Math.max(res, left[cur][j]*(stack.peekLast()-i-1));
                 }
                 stack.addLast(i);
             }
         }
-
         return res;
     }
 }
@@ -1229,7 +1448,19 @@ class Solution {
 
 遍历每个结点，确定结点在当前行的最大连续1，left[i] [j]；
 
-然后对每一列从底向上计算“柱形最大面积”，也就是以当前结点为矩形的右下角结点；
+然后对每一列使用单调栈从底向上计算“柱形最大面积”，也就是以当前结点为矩形的右下角结点；
+
+
+
+#### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
+
+中序遍历非递归写法：
+
+
+
+
+
+
 
 
 
