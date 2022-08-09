@@ -1454,17 +1454,116 @@ class Solution {
 
 #### [94. 二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
 
+非递归写法需要用到栈帮助处理节点、cur指针帮助访问当前节点
+
+前序遍历非递归写法：
+
+```
+class Solution {
+    public List<Integer> preorderTraversal(TreeNode root) {
+        LinkedList<Integer> res = new LinkedList<>();
+        LinkedList<TreeNode> stack = new LinkedList<>();
+        TreeNode cur = root;
+        while(!stack.isEmpty() || cur!=null){
+            if(cur!=null){
+                res.addLast(cur.val);
+                stack.addLast(cur);
+                cur = cur.left;
+            }else{
+                cur = stack.removeLast();
+                cur = cur.right;
+            }
+        } 
+        return res;
+    }
+}
+```
+
 中序遍历非递归写法：
 
+```
+class Solution {
+    public List<Integer> inorderTraversal(TreeNode root) {
+        LinkedList<Integer> res = new LinkedList<>();
+        LinkedList<TreeNode> stack = new LinkedList<>();
+        TreeNode cur = root;
+        while(!stack.isEmpty() || cur!=null){
+            if(cur!=null){
+                stack.addLast(cur);
+                cur = cur.left;
+            }else{
+                cur = stack.removeLast();
+                res.addLast(cur.val);
+                cur = cur.right;
+            }
+        } 
+        return res;
+    }
+}
+```
 
+后序遍历非递归写法：
 
-
+```
+class Solution {
+    public List<Integer> postorderTraversal(TreeNode root) {
+        LinkedList<Integer> res = new LinkedList<>();
+        LinkedList<TreeNode> stack = new LinkedList<>();
+        TreeNode cur = root;
+        //比前序和中序多了这个变量
+        TreeNode r;
+        while(!stack.isEmpty() || cur!=null){
+            if(cur!=null){
+                stack.addLast(cur);
+                cur = cur.left;
+            }else{
+                cur = stack.peekLast();
+                //cur的右子树为空 或者 右子树已经被访问完了
+                if(cur.right==null || r==cur.right){
+                    res.addLast(cur.val);
+                    stack.removeLast();
+                    r = p;
+                    cur = null;
+                }else{
+                    cur = cur.right;
+                }
+            }
+        } 
+        return res;
+    }
+}
+```
 
 
 
 
 
 #### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
+
+方法一：
+
+dp
+
+```
+class Solution {
+    public int numTrees(int n) {
+        int[] dp = new int[n+1];
+        dp[0] = 1;
+        dp[1] = 1;
+        for(int i=2; i<=n; i++){
+        	//转移方程
+            for(int j=0; j<i; j++) dp[i] += dp[j]*dp[i-j-1]; 
+        }
+        return dp[n];
+    }
+}
+```
+
+n个结点的二叉搜索树个数相同（无论是1到n还是3到n+3）；
+
+方法二：（不用看）
+
+记忆化搜索
 
 ```
 class Solution {
@@ -1498,18 +1597,16 @@ n个结点的二叉搜索树个数相同（无论是1到n还是3到n+3）；
 
 ```
 class Solution {
-    private TreeNode pre = null;
-    
+    TreeNode pre;
+
     public boolean isValidBST(TreeNode root) {
         if(root==null) return true;
-        boolean left = isValidBST(root.left);
-        if(left && (pre==null || pre.val < root.val)){
+        if(isValidBST(root.left) && (pre==null||pre.val<root.val)){
             pre = root;
         }else{
             return false;
         }
-        boolean right = isValidBST(root.right);
-        return right;
+        return isValidBST(root.right);
     }
 }
 ```
