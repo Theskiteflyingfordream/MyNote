@@ -1639,6 +1639,29 @@ class Solution {
 
 用队列进行层序遍历
 
+```
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        if(root==null) return new ArrayList<List<Integer>>();
+        Queue<TreeNode> q = new LinkedList<>();
+        q.add(root);
+        List<List<Integer>> res = new ArrayList<>();
+        while(!q.isEmpty()){
+            List<Integer> ele = new ArrayList<>();
+            int t = q.size();
+            while(t-->0){
+                TreeNode n = q.remove();
+                ele.add(n.val);
+                if(n.left!=null) q.add(n.left);
+                if(n.right!=null) q.add(n.right);
+            }
+            res.add(ele);
+        }
+        return res;
+    }
+}
+```
+
 
 
 #### [104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)
@@ -1675,7 +1698,9 @@ class Solution {
 }
 ```
 
-递归
+递归；参数中，root是当前子树的根在前序数组中的位置，left和right分别是当前子树在中序数组中的范围
+
+
 
 #### [114. 二叉树展开为链表](https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/)
 
@@ -1702,7 +1727,19 @@ class Solution {
 
 遍历root以及root的右子树，如果当前结点有左子树，那么就把当前结点的右子树，挂到当前结点的左子树的最右结点，然后当前结点的左子树，换到当前结点的右子树上；
 
+时间复杂度On，空间复杂度O1
+
 方法二：
+
+利用先序遍历的特点，先序遍历与展开分开进行，时间复杂度On，空间复杂度On
+
+先序遍历，把节点按顺序放到list中，然后遍历list改变指针域
+
+方法三：
+
+利用先序遍历的特点，先序遍历与展开同步进行，时间复杂度On，空间复杂度On
+
+**递归**
 
 ```
 private TreeNode pre = null;
@@ -1722,7 +1759,7 @@ public void flatten(TreeNode root) {
 
 因此可以用右左中的逆先序遍历的方式，遍历到当前结点，就把当前结点的右子树置为pre（右子树已经遍历，不会存在信息丢失）
 
-方法三：
+**迭代**
 
 ```
 public void flatten(TreeNode root) { 
@@ -1750,6 +1787,125 @@ public void flatten(TreeNode root) {
 ```
 
 提前存储左右结点的先序遍历
+
+
+
+#### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+```
+class Solution {
+    public int maxProfit(int[] prices) {
+        int max = 0, minPrice = prices[0];
+        for(int i=1; i<prices.length; i++){
+            if(prices[i]<minPrice){
+                minPrice = prices[i];
+            }else{
+                max = Math.max(max, prices[i]-minPrice);
+            }
+        }
+        return max;
+    }
+}
+```
+
+当前卖出股票的获利最大的情况为，从历史最低的时候买入；对每一天考虑获利最大，取最大
+
+**股票II**
+
+贪心
+
+```
+class Solution {
+    public int maxProfit(int[] prices) {
+        int res = 0;
+        for(int i=1; i<prices.length; i++){
+            if(prices[i]>prices[i-1]) res += prices[i]-prices[i-1];
+        }
+        return res;
+    }
+}
+```
+
+**股票III**
+
+dp
+
+一天一共就有五个状态，
+
+1. 没有操作
+2. 第一次买入
+3. 第一次卖出
+4. 第二次买入
+5. 第二次卖出
+
+dp[i] [j]中 i表示第i天，j为 [0 - 4] 五个状态，dp[i] [j]表示第i天状态j所剩最大现金。
+
+```
+class Solution {
+    public int maxProfit(int[] prices) {
+        int day = prices.length;
+        int[][] dp = new int[day][5];
+        dp[0][0] = 0;
+        dp[0][1] = -prices[0];
+        dp[0][2] = 0;
+        dp[0][3] = -prices[0];
+        dp[0][4] = 0;
+        for(int i=1; i<day; i++){
+            dp[i][1] = Math.max(dp[i-1][0]-prices[i], dp[i-1][1]);
+            dp[i][2] = Math.max(dp[i-1][1]+prices[i], dp[i-1][2]);
+            dp[i][3] = Math.max(dp[i-1][2]-prices[i], dp[i-1][3]);
+            dp[i][4] = Math.max(dp[i-1][3]+prices[i], dp[i-1][4]);
+        }
+        return dp[day-1][4];
+    }
+}
+```
+
+**股票IV**
+
+奇数天买入，偶数天卖出
+
+```
+class Solution {
+    public int maxProfit(int k, int[] prices) {
+        int days = prices.length;
+        if(days==0) return 0;
+        int[][] dp = new int[days][2*k+1];
+        for(int j=1; j<2*k; j+=2){
+            dp[0][j] = -prices[0];
+        }
+        for(int i=1; i<days; i++){
+            for(int j=1; j<2*k; j+=2){
+                dp[i][j] = Math.max(dp[i-1][j-1]-prices[i], dp[i-1][j]);
+                dp[i][j+1] = Math.max(dp[i-1][j]+prices[i], dp[i-1][j+1]);
+            }
+        }
+        return dp[days-1][2*k];
+    }
+}
+```
+
+**股票含冷冻期**
+
+多了一个冷冻期的状态
+
+```
+class Solution {
+    public int maxProfit(int[] prices) {
+        int days = prices.length;
+        int[][] dp = new int[days][4];
+        dp[0][1] = -prices[0];
+        for(int i=1; i<days; i++){
+            dp[i][1] = Math.max(Math.max(dp[i-1][3]-prices[i],dp[i-1][0]-prices[i]),dp[i-1][1]);
+            dp[i][2] = Math.max(dp[i-1][1]+prices[i],dp[i-1][2]);
+            dp[i][3] = Math.max(dp[i-1][2],dp[i-1][3]);
+        }
+        return Math.max(dp[days-1][2], dp[days-1][3]);
+    }
+}
+```
+
+
 
 
 
