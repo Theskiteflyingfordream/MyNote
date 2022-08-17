@@ -1826,6 +1826,10 @@ class Solution {
 }
 ```
 
+动规
+
+两个状态，分别表示交易完后持有 以及 交易完后不持有
+
 **股票III**
 
 dp
@@ -1905,7 +1909,54 @@ class Solution {
 }
 ```
 
+**股票含手续费**
 
+动规解法：
+
+状态0表示当天交易完后不持有；状态1表示持有
+
+```
+class Solution {
+    public int maxProfit(int[] prices, int fee) {
+        int len = prices.length;
+        int[][] dp = new int[len][2];
+        dp[0][0] = 0;
+        dp[0][1] = -prices[0];
+        for(int i=1; i<len; i++){
+            dp[i][0] = Math.max(dp[i-1][0], dp[i-1][1]+prices[i]-fee);
+            dp[i][1] = Math.max(dp[i-1][1], dp[i-1][0]-prices[i]);
+        }
+        return dp[len-1][0];
+    }
+}
+```
+
+贪心
+
+```
+class Solution {
+    public int maxProfit(int[] prices, int fee) {
+        int n = prices.length;
+        int buy = prices[0] + fee;
+        int profit = 0;
+        for (int i = 1; i < n; ++i) {
+            if (prices[i] + fee < buy) {
+                buy = prices[i] + fee;
+            } else if (prices[i] > buy) {
+                profit += prices[i] - buy;
+                buy = prices[i];
+            }
+        }
+        return profit;
+    }
+}
+```
+
+如果当前的股票价格 prices[i] 加上手续费 fee 小于 buy，那么与其使用 buy 的价格购买股票，我们不如以 prices[i]+fee 的价格购买股票，因此我们将 buy 更新为 prices[i]+fee；
+
+如果当前的股票价格 prices[i] 大于 buy，那么我们直接卖出股票并且获得prices[i]−buy 的收益。但实际上，我们此时卖出股票可能并不是全局最优的（例如下一天股票价格继续上升），因此我们可以提供一个反悔操作，看成当前手上拥有一支买入价格为 prices[i] 的股票，将 buy 更新为 prices[i]。这样一来，如果下一天股票价格继续上升，我们会获得 prices[i+1]−prices[i] 的收益，加上这一天 prices[i]−buy 的收益，恰好就等于在这一天不进行任何操作，而在下一天卖出股票的收益；
+
+[买卖股票的最佳时机含手续费 - 买卖股票的最佳时机含手续费 - 力扣（LeetCode）](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/solution/mai-mai-gu-piao-de-zui-jia-shi-ji-han-sh-rzlz/)
 
 
 
