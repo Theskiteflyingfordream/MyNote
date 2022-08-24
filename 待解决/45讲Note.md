@@ -13,15 +13,7 @@
 - 第十三章：重建表减少占用空间的方法
 - 第十四章：不同count的实现方式，存在的问题=》用缓存解决，存在不一致=》用数据库解决
 - 第十五章：binlog和redolog 
-
 - 第十七章：
-
-
-https://www.51cto.com/article/664227.html
-
-https://blog.csdn.net/lengxiao1993/article/details/82771768
-
-https://www.eet-china.com/mp/a44399.html
 
 
 
