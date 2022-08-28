@@ -2220,6 +2220,37 @@ class LRUCache {
 
 方法一：使用递归的归并排序
 
+```
+class Solution {
+    public ListNode sortList(ListNode head) {
+        if(head==null || head.next==null) return head;
+        //注意fast=head.next而不是head，否则会stackoverflow
+        ListNode fast = head.next, slow = head;
+        while(fast!=null && fast.next!=null){
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+        ListNode tmp = slow.next;
+        slow.next = null;
+        ListNode left = sortList(head);
+        ListNode right = sortList(tmp);
+        ListNode res = new ListNode(), cur = res;
+        while(left!=null&&right!=null){
+            if(left.val<right.val){
+                cur.next = left;
+                left = left.next;
+            }else{
+                cur.next = right;
+                right = right.next;
+            }
+            cur = cur.next;
+        }
+        cur.next = (left==null)? right : left;
+        return res.next;
+    }
+}
+```
+
 方法二：使用迭代的归并排序
 
 ```
@@ -2293,6 +2324,110 @@ class Solution {
 dp[i] = Math.max(nums[i]+dp[i-2], dp[i-1])，前一个表示偷当前，后一个表示不偷当前，考虑第i-1个，注意这里并不是说一定偷第i-1个；
 
 注意dp[1] = Math.max(dp[0], nums[1])；
+
+dp[i] 表示考虑前i家时，能够得到的最多钱；
+
+**打家劫舍II**
+
+分两种情况：丢首、丢尾；两者取最大
+
+```
+class Solution {
+    public int rob(int[] nums) {
+        if(nums.length==0) return 0;
+        if(nums.length==1) return nums[0];
+        return Math.max(doRob(nums,0,nums.length-2),doRob(nums,1,nums.length-1));
+    }
+    public int doRob(int[] nums, int start, int end){
+        if(start==end) return nums[start];
+        int[] dp = new int[nums.length];
+        dp[start] = nums[start];
+        dp[start+1] = Math.max(nums[start], nums[start+1]);
+        for(int i=start+2; i<=end; i++){
+            dp[i] = Math.max(dp[i-1], nums[i]+dp[i-2]);
+        }
+        return dp[end];
+    }
+}
+```
+
+**打家劫舍III（树形问题在动态规划问题解法）**
+
+**方法一（暴力递归）：**
+
+```
+class Solution {
+    public int rob(TreeNode root) {
+        if(root==null) return 0;
+        int money = root.val;
+        
+        if(root.left!=null) money += rob(root.left.left)+rob(root.left.right);
+        if(root.right!=null) money += rob(root.right.left)+rob(root.right.right);
+        
+        return Math.max(money, rob(root.left)+rob(root.right));
+    }
+}
+```
+
+利用最优子结构性质：
+
+偷以root为根的树的最多钱 = 
+
+max（(偷root+偷以四个孙子为根的树的最多钱), (偷以两个孩子为根的树的最多钱)）
+
+**方法二（优化重复子问题）：**
+
+```
+public int rob(TreeNode root) {
+    HashMap<TreeNode, Integer> memo = new HashMap<>();
+    return robInternal(root, memo);
+}
+
+public int robInternal(TreeNode root, HashMap<TreeNode, Integer> memo) {
+    if (root == null) return 0;
+    if (memo.containsKey(root)) return memo.get(root);
+    int money = root.val;
+
+    if (root.left != null) {
+        money += (robInternal(root.left.left, memo) + robInternal(root.left.right, memo));
+    }
+    if (root.right != null) {
+        money += (robInternal(root.right.left, memo) + robInternal(root.right.right, memo));
+    }
+    int result = Math.max(money, robInternal(root.left, memo) + robInternal(root.right, memo));
+    memo.put(root, result);
+    return result;
+}
+```
+
+方法一中，当以孙子作为爷爷结点时，会出现重复子问题，可以记忆化
+
+**方法三：**
+
+```
+public int rob(TreeNode root) {
+    int[] result = robInternal(root);
+    return Math.max(result[0], result[1]);
+}
+
+public int[] robInternal(TreeNode root) {
+    if (root == null) return new int[2];
+    int[] result = new int[2];
+
+    int[] left = robInternal(root.left);
+    int[] right = robInternal(root.right);
+	
+	//result[0]存的是当前结点不不偷的最大值
+    result[0] = Math.max(left[0], left[1]) + Math.max(right[0], right[1]);
+    //result[1]存的是当前结点偷的最大值
+    result[1] = left[0] + right[0] + root.val;
+
+    return result;
+}
+
+```
+
+递归的方法返回数组
 
 
 
