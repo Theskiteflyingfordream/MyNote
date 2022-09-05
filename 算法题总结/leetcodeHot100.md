@@ -2678,7 +2678,42 @@ class Solution {
 
 方法二：
 
-快排+分治
+快排+二分
+
+```
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        return doFind(nums, nums.length-k, 0, nums.length-1);
+    }
+
+    private int doFind(int[] nums, int index, int l, int r){
+        int i = partition(nums, l, r);
+        //二分
+        if(i==index) return nums[i];
+        else if(i>index) return doFind(nums, index, l, i-1);
+        else return doFind(nums, index, i+1, r);
+    }
+
+    //注意快排写法
+    private int partition(int[] nums, int l, int r){
+        int lp = l, rp = r;
+        while(lp<rp){
+            while(nums[rp]>=nums[l] && lp<rp) rp--;
+            while(nums[lp]<=nums[l] && lp<rp) lp++;
+            swap(nums,lp,rp);
+        }
+        swap(nums, l, lp);
+        return lp;
+    }
+
+    private void swap(int[] nums, int i, int j){
+        int t = nums[i];
+        nums[i] = nums[j];
+        nums[j] = t;
+    }
+
+}
+```
 
 
 
@@ -2840,6 +2875,14 @@ class Solution {
 
 
 
+#### 253 会议室II
+
+贪心 + 优先队列
+
+https://cloud.tencent.com/developer/article/1659685
+
+
+
 #### [279. 完全平方数](https://leetcode-cn.com/problems/perfect-squares/)
 
 ```
@@ -2864,6 +2907,25 @@ dp；
 转移方程为：对于所有j，i-j*j>=0,
 
 dp[i] = Math.min(dp[i], dp[i-j*j]+1);
+
+
+
+#### [283. 移动零](https://leetcode.cn/problems/move-zeroes/)
+
+```
+class Solution {
+    public void moveZeroes(int[] nums) {
+        int slow = 0, fast = 0;
+        while(fast<nums.length){
+            if(nums[fast]!=0) nums[slow++] = nums[fast];
+            fast++;
+        }
+        while(slow<nums.length) nums[slow++] = 0;
+    }
+}
+```
+
+快慢指针
 
 
 
