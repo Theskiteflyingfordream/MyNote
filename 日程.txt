@@ -1,18 +1,25 @@
 公司			日期		内推		
-中兴			9.5		晚上
 途虎养车			9.7		晚上
-网易笔试			9.4		下午
-用友集团			9.4		测评
-科大讯飞			9.6		测评（看牛客是否回复了）
-
+用友			9.9晚上
+小米测评			9.7
 
 等待复盘
 中兴笔试			9.5		led
+
+
+实习项目的业务加深理解——削峰？
+
+线程池的keepAliveTime在哪里体现？
+
+https://www.cnblogs.com/Courage129/p/14401680.html？https://cloud.tencent.com/developer/article/1687484
+https://blog.csdn.net/foxException/article/details/119774421
+
+
+
+
+
 
 已复盘
 飞步科技(力扣)		9.3下午		题号：1746 314 1196 1136 1989
 美团笔试			9.3上午		https://www.nowcoder.com/discuss/1038729
 网易笔试			9.4下午	
-
-
-实习项目的业务加深理解——削峰？
