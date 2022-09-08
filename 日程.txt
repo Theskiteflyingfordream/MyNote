@@ -1,18 +1,18 @@
-公司			日期		内推		
-途虎养车			9.7		晚上
+公司			日期			
 用友			9.9晚上
-小米测评			9.7
+京东笔试			重新约
 
 等待复盘
-中兴笔试			9.5		led
+中兴笔试			9.5		led	n个1 	4位：6位的组合
 
 
 实习项目的业务加深理解——削峰？
 
-线程池的keepAliveTime在哪里体现？
 
-https://www.cnblogs.com/Courage129/p/14401680.html？https://cloud.tencent.com/developer/article/1687484
+https://www.cnblogs.com/Courage129/p/14401680.html
 https://blog.csdn.net/foxException/article/details/119774421
+volatile是如何保证有序性的？
+如何保证可见性的？=》基于MESI的？
 
 
 
