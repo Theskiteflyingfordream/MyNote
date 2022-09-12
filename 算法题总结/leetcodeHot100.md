@@ -2437,71 +2437,64 @@ public int[] robInternal(TreeNode root) {
 
 ```
 class Solution {
-
     private class UnionFind{
         private int count;
         private int[] parent;
-        private int[] rank;
-
+        public int getCount() {
+            return count;
+        }
         public UnionFind(char[][] grid){
-            int n = grid.length;
-            int m = grid[0].length;
+            int n = grid.length, m = grid[0].length;
+            count = 0;
             parent = new int[n*m];
-            rank = new int[n*m];
-            for(int i=0; i<n; i++){
-                for(int j=0; j<m; j++){
-                    if (grid[i][j] == '1') {
-                        parent[i * m + j] = i * m + j;
-                        ++count;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < m; j++) {
+                    if(grid[i][j]=='1'){
+                        parent[i*m+j] = i*m+j;
+                        count++;
                     }
                 }
             }
         }
-
-        public int find(int x){
-            if(parent[x]!=x) parent[x] = find(parent[x]);
-            return parent[x];
-        }
-
-        public void merge(int x, int y){
-            int rootx = find(x);
-            int rooty = find(y);
-            if(rootx!=rooty){
-                if (rank[rootx] > rank[rooty]) {
-                    parent[rooty] = rootx;
-                } else if (rank[rootx] < rank[rooty]) {
-                    parent[rootx] = rooty;
-                } else {
-                    parent[rooty] = rootx;
-                    rank[rootx] += 1;
-                }
-                --count;
+        public void merge(int a, int b) {
+            int aP = find(a);
+            int bP = find(b);
+            if(aP!=bP){
+                parent[bP] = aP;
+                count--;
             }
         }
-
-        public int getCount(){
-            return this.count;
+        
+        //路径压缩
+        private int find(int a) {
+            if(parent[a]!=a) parent[a] = find(parent[a]);
+            return parent[a];
         }
-
     }
+
 
     public int numIslands(char[][] grid) {
         UnionFind u = new UnionFind(grid);
-        int m = grid[0].length;
-        for(int i=0; i<grid.length; i++){
-            for(int j=0; j<grid[0].length; j++){
-                if(grid[i][j]=='1') {
-                    if(i-1>=0&&grid[i-1][j]=='1') u.merge((i-1)*m+j, i*m+j);
-                    if(j-1>=0&&grid[i][j-1]=='1') u.merge(i*m+j-1, i*m+j);
-                }   
+        int n = grid.length, m = grid[0].length;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if(grid[i][j]=='1'){
+                    if(i-1>=0&&grid[i-1][j]=='1') u.merge(i*m+j,(i-1)*m+j);
+                    if(j-1>=0&&grid[i][j-1]=='1') u.merge(i*m+j,i*m+j-1);
+                }
             }
         }
         return u.getCount();
     }
 }
+
 ```
 
 并查集
+
+leetcode547题用同样的办法
+
+
 
 
 
@@ -2543,15 +2536,14 @@ class Solution {
 ```
 class Solution {
     public ListNode reverseList(ListNode head) {
-        if(head==null) return null;
-        ListNode pre = null, cur = head, next = cur.next;
+        ListNode prev = null, cur = head;
         while(cur!=null){
-            cur.next = pre;
-            pre = cur;
+            ListNode next = cur.next;
+            cur.next = prev;
+            prev = cur;
             cur = next;
-            if(next!=null) next = next.next; 
         }
-        return pre;
+        return prev;
     }
 }
 ```
@@ -2562,46 +2554,81 @@ class Solution {
 
 #### [207. 课程表](https://leetcode-cn.com/problems/course-schedule/)
 
+拓扑排序
+
+方法一：深度优先搜索
+
 ```
 class Solution {
     public boolean canFinish(int numCourses, int[][] prerequisites) {
-    	//以key为先修课的课程存入set中
+        //以key为先修课的课程存入set中
         Map<Integer,Set<Integer>> map = new HashMap<>();
-        //nums[i]表示i的先修课的个数
-        int[] nums = new int[numCourses];
-        for(int i=0; i<prerequisites.length; i++){
-            if(map.containsKey(prerequisites[i][1])){
-                Set<Integer> set = map.get(prerequisites[i][1]);
-                set.add(prerequisites[i][0]);
-            }else{
-                Set<Integer> set = new HashSet<>();
-                set.add(prerequisites[i][0]);
-                map.put(prerequisites[i][1], set);
-            }
-            nums[prerequisites[i][0]]++;
+        //构建map
+        for (int i = 0; i < prerequisites.length; i++) {
+            if(!map.containsKey(prerequisites[i][1])) map.put(prerequisites[i][1], new HashSet<>());
+            map.get(prerequisites[i][1]).add(prerequisites[i][0]);
         }
-        int t = 0;
-        while((t=getZero(nums,map))!=-1){
-            nums[t] = -1;
-            for(Integer i:map.get(t)){
-                nums[i]--;
-            }
-            map.remove(t);
+        //深度优先搜索判断是否有环，注意flag[i]的含义
+        int[] flag = new int[numCourses];
+        for (int i = 0; i < numCourses; i++) {
+            if(flag[i]!=-1 && !dfs(flag,map,i)) return false;
         }
-        return map.isEmpty();
+        return true;
     }
 
-    private int getZero(int[] nums, Map<Integer,Set<Integer>> map){
-        for(int i=0; i<nums.length; i++){
-            if(nums[i]==0&&map.containsKey(i)) return i;
+    private boolean dfs(int[] flag, Map<Integer,Set<Integer>> map, int i){
+        if(flag[i]==1) return false;
+        if(flag[i]==-1) return true;
+        flag[i] = 1;
+        if(map.containsKey(i)){
+            for(int e:map.get(i)){
+                if(!dfs(flag, map, e)) return false;
+            }
         }
-        return -1;
+        flag[i] = -1;
+        return true;
     }
-
 }
 ```
 
-拓扑排序；
+方法二：广度优先搜索
+
+```
+class Solution {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        //入度表
+        int[] inTable = new int[numCourses];
+        ////以key为先修课的课程存入set中
+        Map<Integer,Set<Integer>> map = new HashMap<>();
+        //构建入度表和map
+        for (int i = 0; i < prerequisites.length; i++) {
+            inTable[prerequisites[i][0]]++;
+            if(!map.containsKey(prerequisites[i][1])){
+                map.put(prerequisites[i][1], new HashSet<>());
+            }
+            map.get(prerequisites[i][1]).add(prerequisites[i][0]);
+        }
+        //广度优先搜索，每次对入度为0的结点处理，删除它的出边
+        Queue<Integer> queue = new LinkedList<>();
+        for (int i = 0; i < numCourses; i++) {
+            if(inTable[i]==0) queue.add(i);
+        }
+        while(!queue.isEmpty()){
+            int e = queue.poll();
+            inTable[e] = -1;
+            if(map.containsKey(e)){
+                for(Integer i:map.get(e)){
+                    inTable[i]--;
+                    if(inTable[i]==0) queue.add(i);
+                }
+            }
+            numCourses--;
+        }
+        return numCourses==0;
+    }
+}
+
+```
 
 
 
@@ -2750,6 +2777,8 @@ dp[i] [j] = min（上面，左面，左上）+1；
 
 #### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
 
+方法一：
+
 ```
 class Solution {
     public boolean isPalindrome(ListNode head) {
@@ -2789,7 +2818,35 @@ class Solution {
 }
 ```
 
-把链表用快慢指针分为前后两部分，反转后面一部分，然后依次将前后两部分比较，最后再反转后面一部分还原；注意快慢指针如何找前后部分
+把链表用快慢指针分为前后两部分，反转后面一部分，然后依次将前后两部分比较，最后再反转后面一部分还原；注意快慢指针如何找前后部分；O(n)时间，O(1)空间
+
+方法二：
+
+递归做法，利用递归 与 全局变量的特性
+
+```
+class Solution {
+    private ListNode frontPointer;
+
+    private boolean recursivelyCheck(ListNode currentNode) {
+        if (currentNode != null) {
+            if (!recursivelyCheck(currentNode.next)) {
+                return false;
+            }
+            if (currentNode.val != frontPointer.val) {
+                return false;
+            }
+            frontPointer = frontPointer.next;
+        }
+        return true;
+    }
+
+    public boolean isPalindrome(ListNode head) {
+        frontPointer = head;
+        return recursivelyCheck(head);
+    }
+}
+```
 
 
 
@@ -2929,7 +2986,109 @@ class Solution {
 
 
 
+#### [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
+
+方法一：
+
+二分查找
+
+```
+class Solution {
+    public int findDuplicate(int[] nums) {
+        int n = nums.length;
+        int l = 1, r = n - 1, ans = -1;
+        while (l <= r) {
+            int mid = (l + r) >> 1;
+            int cnt = 0;
+            for (int i = 0; i < n; ++i) {
+                if (nums[i] <= mid) {
+                    cnt++;
+                }
+            }
+            if (cnt <= mid) {
+                l = mid + 1;
+            } else {
+                r = mid - 1;
+                ans = mid;
+            }
+        }
+        return ans;
+    }
+}
+```
+
+记数组中小于等于这个数的数量，为这个数的cnt属性；
+
+若num是[1，n-1]中的一个数，target是原数组中的重复值，则:
+if num<target, num的cnt属性值<=num
+if num>=target, num的cnt属性值>num
+
+cnt属性具有单调性，可以使用二分查找。
+
+
+
+方法二：
+
+考虑到第 i 位，我们记 nums 数组中二进制展开后第 i 位为 1 的数有 x 个，数字 [1,n] 这 n 个数二进制展开后第 i 位为 1 的数有 y 个，那么重复的数第 i 位为 1 当且仅当 x>y。
+
+```
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int n = nums.size(), ans = 0;
+        // 确定二进制下最高位是多少
+        int bit_max = 31;
+        while (!((n - 1) >> bit_max)) {
+            bit_max -= 1;
+        }
+        for (int bit = 0; bit <= bit_max; ++bit) {
+            int x = 0, y = 0;
+            for (int i = 0; i < n; ++i) {
+                if (nums[i] & (1 << bit)) {
+                    x += 1;
+                }
+                if (i >= 1 && (i & (1 << bit))) {
+                    y += 1;
+                }
+            }
+            if (x > y) {
+                ans |= 1 << bit;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+方法三：
+
+我们对 nums 数组建图，每个位置 i 连一条 i→nums[i] 的边。由于存在的重复的数字 target，因此 target 这个位置一定有起码两条指向它的边，因此整张图一定存在环，且我们要找到的 target 就是这个环的入口。那么就等价于环形链表II
+
+```
+class Solution {
+    public int findDuplicate(int[] nums) {
+        int slow = 0, fast = 0;
+        do {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while (slow != fast);
+        slow = 0;
+        while (slow != fast) {
+            slow = nums[slow];
+            fast = nums[fast];
+        }
+        return slow;
+    }
+}
+```
+
+
+
 #### [297. 二叉树的序列化与反序列化](https://leetcode-cn.com/problems/serialize-and-deserialize-binary-tree/)
+
+方法一：广度优先搜索
 
 ```
 public class Codec {
@@ -2981,6 +3140,84 @@ public class Codec {
 ```
 
 序列化与反序列化都需要队列，反序列化还需要i定位当前元素；（注意序列化后这不是一个完全二叉树）
+
+方法二：
+
+深搜，且记录空结点
+
+https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/solution/er-cha-shu-de-xu-lie-hua-yu-fan-xu-lie-hua-by-le-2/
+
+
+
+#### [300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+方法一：
+
+动态规划，dp[i]表示以第i个元素为最后一个元素的”最长严格递增子序列”的长度
+
+```
+class Solution {
+    public int lengthOfLIS(int[] nums) {
+        if (nums.length == 0) {
+            return 0;
+        }
+        int[] dp = new int[nums.length];
+        dp[0] = 1;
+        int maxans = 1;
+        for (int i = 1; i < nums.length; i++) {
+            dp[i] = 1;
+            //求dp[i]的转移方程
+            for (int j = 0; j < i; j++) {
+                if (nums[i] > nums[j]) {
+                    dp[i] = Math.max(dp[i], dp[j] + 1);
+                }
+            }
+            maxans = Math.max(maxans, dp[i]);
+        }
+        return maxans;
+    }
+}
+```
+
+
+
+方法二：
+
+贪心+二分查找
+
+维护一个数组 d[i] ，表示长度为 i 的最长上升子序列的末尾元素的最小值，用 len 记录目前最长上升子序列的长度，起始时len 为 1，d[1]=nums[0]。
+
+```
+class Solution {
+    public int lengthOfLIS(int[] nums) {
+        int len = 1, n = nums.length;
+        if (n == 0) {
+            return 0;
+        }
+        int[] d = new int[n + 1];
+        d[len] = nums[0];
+        for (int i = 1; i < n; ++i) {
+            if (nums[i] > d[len]) {
+                d[++len] = nums[i];
+            } else {
+                int l = 1, r = len, pos = 0; // 如果找不到说明所有的数都比 nums[i] 大，此时要更新 d[1]，所以这里将 pos 设为 0
+                //找到最后一个比 nums[i] 小的数 d[k]
+                while (l <= r) {
+                    int mid = (l + r) >> 1;
+                    if (d[mid] < nums[i]) {
+                        pos = mid;
+                        l = mid + 1;
+                    } else {
+                        r = mid - 1;
+                    }
+                }
+                d[pos + 1] = nums[i];
+            }
+        }
+        return len;
+    }
+}
+```
 
 
 

@@ -1,20 +1,7 @@
-公司			日期			
-用友			9.9晚上
-京东笔试			重新约
+CAS的原理；
+CAS和锁分别适合什么场景
 
-等待复盘
-中兴笔试			9.5		led	n个1 	4位：6位的组合
-
-
-实习项目的业务加深理解——削峰？
-
-
-https://www.cnblogs.com/Courage129/p/14401680.html
-https://blog.csdn.net/foxException/article/details/119774421
-volatile是如何保证有序性的？
-如何保证可见性的？=》基于MESI的？
-
-
+梳理一下看门狗逻辑
 
 
 
@@ -22,4 +9,5 @@ volatile是如何保证有序性的？
 已复盘
 飞步科技(力扣)		9.3下午		题号：1746 314 1196 1136 1989
 美团笔试			9.3上午		https://www.nowcoder.com/discuss/1038729
-网易笔试			9.4下午	
+网易笔试			9.4下午
+	
