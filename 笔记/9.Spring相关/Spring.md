@@ -553,9 +553,7 @@ run的时候，会创建一个SpringApplication对象，首先会加载整个应
 里边的**prepareContext**()方法将启动类注册到容器里边；**refreshContext**()方法执行容器的刷新，到了Spring容器的refresh，BFPP接口的实现类会对解析@Import等注解；
 
 [(123条消息) springboot自动装配_好好玩_tyrant的博客-CSDN博客_springboot自动装配](https://blog.csdn.net/qq_57434877/article/details/123933529)
-  
-  
-  
-https://juejin.cn/post/7004281096074428423
+
+ 
 
 ​    
