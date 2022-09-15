@@ -554,3 +554,4 @@ run的时候，会创建一个SpringApplication对象，首先会加载整个应
 
 [(123条消息) springboot自动装配_好好玩_tyrant的博客-CSDN博客_springboot自动装配](https://blog.csdn.net/qq_57434877/article/details/123933529)
 
+​    
