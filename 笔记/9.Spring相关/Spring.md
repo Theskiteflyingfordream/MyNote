@@ -184,7 +184,7 @@ doGetBean除了判断是否单实例外，还会判断是否多实例，是的�
 （@Resource是由CommonAnnotationBeanPostProcessor支持，同样也是实现了xxxx）
 
 
-
+（X）
 ## IOC
 
 ### 导入Bean
@@ -215,7 +215,7 @@ doGetBean除了判断是否单实例外，还会判断是否多实例，是的�
 
 
 
-### bean属性的自动注入
+### bean属性的自动注入（！）
 
 @Autowired默认是按照类型去容器中找对应的组件，如果找到多个相同类型的组件，那么是将属性名称作为组件的id，到IOC容器中进行查找。（不存在则报错，需要指定required=false）（加载方法或字段或类上）
 
@@ -245,7 +245,7 @@ doGetBean除了判断是否单实例外，还会判断是否多实例，是的�
 
 
 
-### bean的组件的自动注入，实现@xxxAware
+### bean的组件的自动注入，实现@xxxAware（！）
 
 原理使用XxxAwareProcessor实现，其实现了BeanPostProcessor，在postProcessBeforeInitialization()中调用invokeAwareInterfaces()会用多个if来判断是否实现了某个Aware接口，是则传入参数并调用bean的所实现的Aware接口的方法。
 
@@ -553,5 +553,9 @@ run的时候，会创建一个SpringApplication对象，首先会加载整个应
 里边的**prepareContext**()方法将启动类注册到容器里边；**refreshContext**()方法执行容器的刷新，到了Spring容器的refresh，BFPP接口的实现类会对解析@Import等注解；
 
 [(123条消息) springboot自动装配_好好玩_tyrant的博客-CSDN博客_springboot自动装配](https://blog.csdn.net/qq_57434877/article/details/123933529)
+  
+  
+  
+https://juejin.cn/post/7004281096074428423
 
 ​    
