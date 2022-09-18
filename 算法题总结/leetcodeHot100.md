@@ -3221,6 +3221,10 @@ class Solution {
 
 
 
+衍生题目：合唱队形[AcWing 482. 合唱队形 - AcWing](https://www.acwing.com/solution/content/3805/)
+
+
+
 #### [301. 删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
 
 方法一：
@@ -3389,57 +3393,6 @@ class Solution {
 二维DP的两个for顺序没有要求，更好理解；二维dp中，01背包和完全背包的唯一区别在于转移方程中的 右边是i-1 还是i；
 
 
-
-#### [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/)
-
-方法一：
-
-记忆化搜索
-
-```
-class Solution {
-    Map<TreeNode, Integer> map = new HashMap<>();
-    public int rob(TreeNode root) {
-        if(root==null) return 0;
-        Integer res;
-        if((res=map.get(root)) != null) return res;
-        int val1 = root.val, val2 = 0;
-        //偷当前
-        if(root.left!=null) val1 += rob(root.left.left)+rob(root.left.right);
-        if(root.right!=null) val1 += rob(root.right.left)+rob(root.right.right);
-        //不偷当前
-        val2 += rob(root.left) + rob(root.right);
-        //记忆化
-        res = Math.max(val1, val2);
-        map.put(root, res);
-        return res;
-    }
-}
-```
-
-方法二：
-
-树状DP
-
-```
-class Solution {
- 
-    public int rob(TreeNode root) {
-        int[] res = doRob(root);
-        return Math.max(res[0], res[1]);
-    }
-
-    public int[] doRob(TreeNode root){
-        if(root==null) return new int[]{0,0};
-        int[] left = doRob(root.left);
-        int[] right = doRob(root.right);
-        return new int[]{Math.max(left[0],left[1])+Math.max(right[0],right[1]), root.val+left[0]+right[0]};
-    }
-
-}
-```
-
-关键在于doRob返回值，0表示不偷的最大值，1表示偷的最大值
 
 
 
@@ -3793,6 +3746,20 @@ class Solution {
 前缀和，prefix中存的是，从根到当前结点，前缀和为key的个数为value，curr表示从根到当前结点的和；
 
 curr-value=targetSum时，表示从根到当前结点之间，存在某一个结点X，X到当前结点的和为targetSum
+
+
+
+**路径总和**
+
+方法一：广搜（两个队列，一个存结点，一个存根到对应结点的路径和）；方法二：深搜
+
+
+
+**路径总和II**
+
+方法一：广搜（两个队列，一个存结点，一个存根到对应结点的路径和，另外需要用哈希表存结点的父节点，以便找到时还原路径）；
+
+方法二：深搜（另外需要记录路径）
 
 
 
@@ -4228,6 +4195,8 @@ class Solution {
 
 
 
+**非hot100的需要看的题**
+
 #### [547. 省份数量](https://leetcode-cn.com/problems/number-of-provinces/)
 
 并查集
@@ -4242,76 +4211,4 @@ class Solution {
 - 哈希表存储存储值到索引的映射。
 
 381题只需要将哈希表中的value改成Set<Integer>就可以了
-
-
-
-#### [300. 最长递增子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
-
-方法一：
-
-dp遍历每一个数，当前的值为前面满足要求的数的值+1的最大值
-
-```
-class Solution {
-    public int lengthOfLIS(int[] nums) {
-        if(nums.length == 0) return 0;
-        int[] dp = new int[nums.length];
-        int res = 0;
-        Arrays.fill(dp, 1);
-        for(int i = 0; i < nums.length; i++) {
-            for(int j = 0; j < i; j++) {
-                if(nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
-            }
-            res = Math.max(res, dp[i]);
-        }
-        return res;
-    }
-}
-```
-
-方法二：
-
-二分查找法；新建一个数组，然后第一个数先放进去，然后第二个数和第一个数比较，如果说大于第一个数，那么就接在他后面，如果小于第一个数，那么就用二分查找法替换。（第一个大于等于arr[i]的数，替换它(value[j] = arr[i])，因为此时以arr[i]为结尾的子序列比以原value[j]结尾的子序列更有“潜力”，因为更小所以有更多的可能得到成更长的子序列）
-
-    private static void binarySearch(int[] arr) {
-        // 长度加1是为了好理解，value[maxLength]即表示maxLength长度的子序列最后一位的值
-        int[] value = new int[arr.length + 1];   
-        // 初始化第一个数
-        int maxLength = 1;
-        value[1] = arr[0];
-        for (int i = 1; i < arr.length; i++) {
-            if (arr[i] > value[maxLength]) {
-                // 大于目前最大长度的子序列的最后一位，给value[]后边续上
-                maxLength++;
-                value[maxLength] = arr[i];
-            } else {
-                // 小于目前最大长度的子序列的最后一位，查找前边部分第一个大于自身的位置
-                // 更新它
-                int t = find(value, maxLength, arr[i]);
-                value[t] = arr[i];
-            }
-        }
-        System.out.println(maxLength);
-    }
-     
-    // 二分查找
-    private static int find(int[] value, int maxindex, int i) {
-        int l = 1, r = maxindex;
-     
-        while (l <= r) {
-            int mid = (l + r) / 2;
-     
-            if (i > value[mid]) {
-                l = mid + 1;
-            } else {
-                r = mid - 1;
-            }
-        }
-     
-        return l;
-    }
-
-序列是78912345，前三个遍历完以后tail是789，这时候遍历到1，就得把1放到合适的位置，于是在tail二分查找1的位置，变成了189（如果序列在此时结束，因为res不变，所以依旧输出3），再遍历到2成为129，然后是123直到12345 
-
-衍生题目：合唱队形[AcWing 482. 合唱队形 - AcWing](https://www.acwing.com/solution/content/3805/)
 
