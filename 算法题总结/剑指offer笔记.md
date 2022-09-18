@@ -1449,7 +1449,7 @@ class Solution {
 
 分治法：建立当前结点后，建立左右子树
 
-recur函数意义
+recur参数意义
 
 ​	root:根节点在先序遍历的位置
 
@@ -1458,6 +1458,12 @@ recur函数意义
 
 
 #### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
+
+方法一：
+
+递归
+
+方法二：
 
 快速幂（矩阵的）？
 
@@ -1576,6 +1582,12 @@ class Solution {
 
 
 #### [剑指 Offer 39. 数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
+
+方法一：
+
+排序，取中间
+
+方法二：
 
 ```
 class Solution {
