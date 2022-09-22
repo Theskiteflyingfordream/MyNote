@@ -25,8 +25,8 @@
 
 **1、存储形式不同**
 
-- 在我们的代码中，锁在redis中存储形式为，“只与锁类型相关，与上锁的线程和进程无关”的key，以及Random生成的伪随机数作为value。
-- Redisson中，锁在redis中存储形式为Hash结构，key是由业务侧决定的锁名，field是uuid（区别不同进程，同一个ConnectionManager中uuid相同）+线程ID（区别同一进程中的线程），value表示上锁的次数。
+- 在我们的代码中，锁在redis中存储形式为，“只与业务相关，与上锁的线程和进程无关”的key，以及Random生成的伪随机数作为value。
+- Redisson中，锁在redis中存储形式为Hash结构，key是由业务侧决定的锁名，field是uuid（含有进程标识和线程标识），value表示上锁的次数。
 
 这也直接导致了互斥以及可重入功能的实现不同
 

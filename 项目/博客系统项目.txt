@@ -1,4 +1,4 @@
-jwt实现登录
+token加redis实现登录
 用户登录的时候，首先在数据库中找出user，如果存在，那么就根据id生成一个token，以token为key把user存到redis中，然后把token返回；往后用户每次请求都先拿出token，到redis中找user，并把user放到全局threadLocal中；退出登录的时候，只需要把redis中对应的key删除就行了；
 这里提到的将suer放到全局的threadLocal是通过springmvc的拦截器干的，是因为防止在一次请求之内频繁地从redis中拿，threadLocal也保证了线程的隔离，同时在请求处理完之后，拦截器将threadLocal中的用户信息删除，防止内存泄漏。
 
